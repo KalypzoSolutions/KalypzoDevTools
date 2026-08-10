@@ -1,7 +1,7 @@
 package fish.crafting.fimfabric.tools.render;
 
 import fish.crafting.fimfabric.util.VectorUtils;
-import net.minecraft.util.Pair;
+import fish.crafting.fimfabric.util.Pair;
 import net.minecraft.util.math.Vec3d;
 
 public enum ToolAxis {

@@ -1,5 +1,6 @@
 package fish.crafting.fimfabric.connection.packets;
 
+import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.connection.packetsystem.InPacket;
 import fish.crafting.fimfabric.rendering.RenderingManager;
 import io.netty.buffer.ByteBufInputStream;
@@ -14,11 +15,11 @@ public class I2FFocusPacket implements InPacket {
     public void readAndExecute(ByteBufInputStream stream) throws IOException {
         MinecraftClient instance = MinecraftClient.getInstance();
 
-        if(instance.currentScreen == null) return; //Already focused in-game
+        if(McCompat.currentScreen() == null) return; //Already focused in-game
 
-        if(instance.currentScreen instanceof ChatScreen || instance.currentScreen instanceof GameMenuScreen) {
+        if(McCompat.currentScreen() instanceof ChatScreen || McCompat.currentScreen() instanceof GameMenuScreen) {
             RenderingManager.get().addTask(() -> {
-                instance.setScreen(null);
+                McCompat.setScreen(null);
             });
         }
     }

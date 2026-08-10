@@ -1,5 +1,6 @@
 package fish.crafting.fimfabric.ui;
 
+import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.rendering.custom.ScreenRenderContext;
 import fish.crafting.fimfabric.tools.CustomTool;
 import fish.crafting.fimfabric.tools.EditorTools;
@@ -198,7 +199,7 @@ public class InterfaceManager {
         }
 
         if(hoveringNothingOrBase && button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == 0){
-            Screen currentScreen = MinecraftClient.getInstance().currentScreen;
+            Screen currentScreen = McCompat.currentScreen();
 
             if(currentScreen instanceof ChatScreen) {
                 if(CursorPicking.areBlockPickingPrerequisitesMet()){

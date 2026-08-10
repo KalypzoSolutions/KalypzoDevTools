@@ -1,0 +1,24 @@
+# Extra mappings for names that Mojang changed when Minecraft went unobfuscated, which the
+# automatic Yarn (1.21.6) -> Mojang (26.2) bridge cannot infer on its own.
+#
+# Left column is the 1.21.6 Yarn name, right column the 26.2 name. Format:
+#   <srcClass> <dstClass>                                  class rename
+#   <srcClass> <srcMethod>(<desc>) [<dstClass>] <dstMethod>(<desc>)   method rename
+#   <srcClass> <srcField>[:<desc>] [<dstClass>] <dstField>[:<desc>]   field rename
+
+# ResourceLocation went back to being called Identifier
+net.minecraft.util.Identifier net.minecraft.resources.Identifier
+
+# RenderLayer/RenderType moved into its own package
+net.minecraft.client.render.RenderLayer net.minecraft.client.renderer.rendertype.RenderType
+
+# DrawContext is now the GUI render-state extractor
+net.minecraft.client.gui.DrawContext net.minecraft.client.gui.GuiGraphicsExtractor
+
+# Getters that lost their `get` prefix
+net.minecraft.client.util.Window getHandle() handle()
+net.minecraft.client.render.GameRenderer getCamera() mainCamera()
+net.minecraft.client.render.Camera getPos() position()
+net.minecraft.registry.RegistryKey getValue() identifier()
+net.minecraft.client.gui.DrawContext drawText() text()
+net.minecraft.client.gui.DrawContext drawCenteredTextWithShadow() centeredText()

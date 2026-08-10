@@ -16,7 +16,7 @@ public class KeyUtil {
 
 
     public static boolean isPressed(int key){
-        return InputUtil.isKeyPressed(MinecraftClient.getInstance().getWindow().getHandle(), key);
+        return McCompat.isKeyPressed(key);
     }
 
 }

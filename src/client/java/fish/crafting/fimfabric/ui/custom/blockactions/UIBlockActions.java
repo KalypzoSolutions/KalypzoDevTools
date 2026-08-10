@@ -1,5 +1,6 @@
 package fish.crafting.fimfabric.ui.custom.blockactions;
 
+import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.ui.FancyText;
 import fish.crafting.fimfabric.ui.actions.UIActionList;
 import fish.crafting.fimfabric.util.ActionUtils;
@@ -23,7 +24,7 @@ public class UIBlockActions extends UIActionList {
 
         title(FancyText.of("Block Actions"));
         addRunElement(FancyText.vector("Copy Center Vector"), ctx -> {
-            Vec3d pos = storedRayBlockPos.toCenterPos();
+            Vec3d pos = McCompat.centerOf(storedRayBlockPos);
             ActionUtils.copyIfClick(ctx, () -> VectorUtils.toString(pos));
         });
 
@@ -34,7 +35,7 @@ public class UIBlockActions extends UIActionList {
         addSeparator();
 
         addRunElement(FancyText.coords("Copy Center Coordinates"), ctx -> {
-            Vec3d pos = storedRayBlockPos.toCenterPos();
+            Vec3d pos = McCompat.centerOf(storedRayBlockPos);
             ActionUtils.copyIfClick(ctx, () -> VectorUtils.toCoordsString(pos));
         });
 
@@ -46,7 +47,7 @@ public class UIBlockActions extends UIActionList {
         addSeparator();
 
         addRunElement(FancyText.location("Copy Center Location"), ctx -> {
-            Vec3d pos = storedRayBlockPos.toCenterPos();
+            Vec3d pos = McCompat.centerOf(storedRayBlockPos);
             ActionUtils.copyIfClick(ctx, () -> LocationUtils.toCoordsString(pos));
         });
 
@@ -72,7 +73,12 @@ public class UIBlockActions extends UIActionList {
                 str = str.substring(6).replaceFirst("}", "");
             }
 
+            //#if MC>=260200
+            //$$ //getValues() returns a Stream in 26.2, not a Map
+            //$$ if(state.getValues().findAny().isPresent()){ //okay now we do some freaky shit to not include default properties
+            //#else
             if(!state.getEntries().isEmpty()){ //okay now we do some freaky shit to not include default properties
+            //#endif
                 BlockState defaultState = state.getBlock().getDefaultState();
 
                 String defaultStateStr = defaultState.toString();

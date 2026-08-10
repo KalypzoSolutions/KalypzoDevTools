@@ -29,7 +29,7 @@ public class BlockUtils {
 
         Camera camera = client.gameRenderer.getCamera();
         Vec3d pos = camera.getPos();
-        Vec3d rot = client.cameraEntity.getRotationVecClient();
+        Vec3d rot = McCompat.cameraRotation();
         Vec3d pos2 = pos.add(rot.multiply(MAX_RAY_DISTANCE));
 
         var fluidHandling = RaycastContext.FluidHandling.NONE;

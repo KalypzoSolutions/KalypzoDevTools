@@ -1,5 +1,6 @@
 package fish.crafting.fimfabric.ui.actions;
 
+import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.rendering.custom.ScreenRenderContext;
 import fish.crafting.fimfabric.ui.FancyText;
 import fish.crafting.fimfabric.ui.UIComponent;
@@ -162,7 +163,7 @@ public class UIActionList extends UIComponent {
         expand(null, null);
         if(returnToGameScreenAfter && wasEnabled){
             returnToGameScreenAfter = false;
-            MinecraftClient.getInstance().setScreen(null);
+            McCompat.setScreen(null);
         }
     }
 

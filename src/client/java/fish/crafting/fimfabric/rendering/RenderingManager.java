@@ -1,5 +1,6 @@
 package fish.crafting.fimfabric.rendering;
 
+import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.rendering.custom.ScreenRenderContext;
 import fish.crafting.fimfabric.tools.CustomTool;
 import fish.crafting.fimfabric.tools.ToolManager;
@@ -25,7 +26,7 @@ public class RenderingManager {
     }
 
     public void renderOverlay(RenderTickCounter tickCounter, DrawContext mcDrawContext) {
-        if(MinecraftClient.getInstance().getOverlay() != null) return; //Reloading textures bugfix
+        if(McCompat.hasOverlay()) return; //Reloading textures bugfix
 
         ScreenRenderContext context = new ScreenRenderContext(mcDrawContext);
 
@@ -39,7 +40,7 @@ public class RenderingManager {
     }
 
     public void renderInGameOverlay(DrawContext drawContext, RenderTickCounter tickCounter) {
-        if(MinecraftClient.getInstance().getOverlay() != null) return; //mhm
+        if(McCompat.hasOverlay()) return; //mhm
 
         ScreenRenderContext context = new ScreenRenderContext(drawContext);
 

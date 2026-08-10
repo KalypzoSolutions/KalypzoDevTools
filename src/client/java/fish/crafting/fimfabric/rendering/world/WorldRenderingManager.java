@@ -1,5 +1,6 @@
 package fish.crafting.fimfabric.rendering.world;
 
+import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.client.FIMModClient;
 import fish.crafting.fimfabric.editor.EditorReference;
 import fish.crafting.fimfabric.editor.Referenced;
@@ -22,8 +23,13 @@ import fish.crafting.fimfabric.ui.custom.blockactions.UIBlockActions;
 import fish.crafting.fimfabric.util.CursorPicking;
 import fish.crafting.fimfabric.util.DebugSettings;
 import fish.crafting.fimfabric.util.VectorUtils;
+//#if MC>=260200
+//$$ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
+//$$ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+//#else
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+//#endif
 import net.fabricmc.fabric.api.event.Event;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
@@ -43,15 +49,26 @@ public class WorldRenderingManager {
 
     private WorldRenderingManager(){
         instance = this;
+        //#if MC>=260200
+        //$$ //BEFORE_DEBUG_RENDER is gone; COLLECT_SUBMITS is the phase where custom geometry is handed
+        //$$ //to the SubmitNodeCollector, which is what ImplRenderContext3D needs.
+        //$$ LevelRenderEvents.COLLECT_SUBMITS.addPhaseOrdering(Event.DEFAULT_PHASE, WORLD_DRAW);
+        //$$ LevelRenderEvents.COLLECT_SUBMITS.register(WORLD_DRAW, get()::handleRenderEvent);
+        //#else
         WorldRenderEvents.BEFORE_DEBUG_RENDER.addPhaseOrdering(Event.DEFAULT_PHASE, WORLD_DRAW);
         WorldRenderEvents.BEFORE_DEBUG_RENDER.register(WORLD_DRAW, get()::handleRenderEvent);
+        //#endif
     }
 
     public static WorldRenderingManager get(){
         return instance == null ? new WorldRenderingManager() : instance;
     }
 
+    //#if MC>=260200
+    //$$ private void handleRenderEvent(@NotNull LevelRenderContext worldCtx){
+    //#else
     private void handleRenderEvent(@NotNull WorldRenderContext worldCtx){
+    //#endif
         RENDER_FRAME++;
 
         RenderContext3D context;
@@ -79,7 +96,7 @@ public class WorldRenderingManager {
             }
         }
 
-        boolean isF3B = MinecraftClient.getInstance().getEntityRenderDispatcher().shouldRenderHitboxes() && DebugSettings.APPLY_MINECRAFT_DEBUG_TOOLS;
+        boolean isF3B = McCompat.isRenderingHitboxes() && DebugSettings.APPLY_MINECRAFT_DEBUG_TOOLS;
         if(RENDER_SELECTOR_HITBOXES || isF3B){
             WorldSelectorManager.get().renderSelectors(context);
         }

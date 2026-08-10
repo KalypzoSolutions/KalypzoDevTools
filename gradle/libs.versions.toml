@@ -1,12 +1,11 @@
 [versions]
-loom = "1.10-SNAPSHOT"
-preprocessor = "fad42fb"
-shadow = "7.1.2"
-blossom = "1.3.1"
+loom = "1.17.19"
+preprocessor = "221276c"
 
 [plugins]
-loom = { id = "fabric-loom", version.ref = "loom" }
+# Non-remapping Loom, for unobfuscated Minecraft (26.1+)
+loom = { id = "net.fabricmc.fabric-loom", version.ref = "loom" }
+# Remapping Loom, for obfuscated Minecraft (1.21.11 and older)
+loomRemap = { id = "net.fabricmc.fabric-loom-remap", version.ref = "loom" }
 preprocessor = { id = "com.replaymod.preprocess", version.ref = "preprocessor" }
 preprocessorRoot = { id = "com.replaymod.preprocess-root", version.ref = "preprocessor" }
-shadow = { id = "com.github.johnrengelman.shadow", version.ref = "shadow" }
-blossom = { id = "net.kyori.blossom", version.ref = "blossom" }

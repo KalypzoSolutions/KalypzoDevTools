@@ -95,18 +95,22 @@ public class ScreenRenderContext {
     }
 
     public void nextLayer(){
-        //#if MC<12106
-        //$$ translate(0, 0, 1);
-        //#else
+        //#if MC>=260200
+        //$$ context.guiRenderState.up();
+        //#elseif MC>=12106
         context.state.goUpLayer();
+        //#else
+        //$$ translate(0, 0, 1);
         //#endif
     }
 
     public void previousLayer(){
-        //#if MC<12106
-        //$$ translate(0, 0, -1);
-        //#else
+        //#if MC>=260200
+        //$$ //26.2 only knows how to go up a layer; later elements draw on top anyway.
+        //#elseif MC>=12106
         context.state.goDownLayer();
+        //#else
+        //$$ translate(0, 0, -1);
         //#endif
     }
 
@@ -178,16 +182,32 @@ public class ScreenRenderContext {
         }
     }
 
+    //26.2 dropped the line/border helpers, so they are filled by hand there.
     public void drawVerticalLine(int x, int y1, int y2, int color){
+        //#if MC>=260200
+        //$$ context.fill(x, Math.min(y1, y2) + 1, x + 1, Math.max(y1, y2), color);
+        //#else
         context.drawVerticalLine(x, y1, y2, color);
+        //#endif
     }
 
     public void drawHorizontalLine(int x1, int x2, int y, int color){
+        //#if MC>=260200
+        //$$ context.fill(Math.min(x1, x2), y, Math.max(x1, x2) + 1, y + 1, color);
+        //#else
         context.drawHorizontalLine(x1, x2, y, color);
+        //#endif
     }
 
     public void drawBorder(int x, int y, int width, int height, int color){
+        //#if MC>=260200
+        //$$ context.fill(x, y, x + width, y + 1, color);
+        //$$ context.fill(x, y + height - 1, x + width, y + height, color);
+        //$$ context.fill(x, y + 1, x + 1, y + height - 1, color);
+        //$$ context.fill(x + width - 1, y + 1, x + width, y + height - 1, color);
+        //#else
         context.drawBorder(x, y, width, height, color);
+        //#endif
     }
 
     public int fontHeight() {

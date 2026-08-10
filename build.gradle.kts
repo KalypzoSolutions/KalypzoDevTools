@@ -1,34 +1,40 @@
+import com.replaymod.gradle.preprocess.PreprocessExtension
 import com.replaymod.gradle.preprocess.PreprocessTask
+import net.fabricmc.loom.api.LoomGradleExtensionAPI
+import net.fabricmc.loom.api.fabricapi.FabricApiExtension
+import org.gradle.api.tasks.bundling.AbstractArchiveTask
 
 plugins {
     java
-    alias(libs.plugins.blossom)
-    alias(libs.plugins.shadow)
-    id("fabric-loom") version "1.10-SNAPSHOT"
-    id(libs.plugins.preprocessor.get().pluginId)
 }
 
 val modPlatform = Platform.of(project)
 
+// Minecraft 26.1 and newer ship unobfuscated, so Yarn (and remapping in general) is gone.
+// Those versions need the non-remapping Loom plugin, older ones the remapping one.
+// Loom has to be applied before the preprocessor, which inspects the `loom` extension to decide
+// whether this project is obfuscated.
+apply(plugin = if (modPlatform.isObfuscated) "net.fabricmc.fabric-loom-remap" else "net.fabricmc.fabric-loom")
+apply(plugin = libs.plugins.preprocessor.get().pluginId)
+
 val mod_version: String by project
 val maven_group: String by project
-val minecraft_version: String by project
-val loader_version: String by project
 
 val mod_name = "Fish's Integrated Minecraft"
 
 version = mod_version
 group = maven_group
 
-val targetJavaVersion = 21
+// Minecraft 26.1+ requires Java 25, everything before it runs on 21.
+val targetJavaVersion = if (modPlatform.isObfuscated) 21 else 25
 
-blossom {
-    replaceToken("@NAME@", mod_name)
-    replaceToken("@ID@", "fim")
-    replaceToken("@VERSION@", mod_version)
+val loaderVersion = when (modPlatform.mcVersion) {
+    in 12104..12108 -> "0.16.14"
+    260200 -> "0.19.3"
+    else -> error("No loader version defined for ${modPlatform.mcVersion}")
 }
 
-preprocess {
+configure<PreprocessExtension> {
     vars.put("MC", modPlatform.mcVersion)
     vars.put("FABRIC", if (modPlatform.isFabric) 1 else 0)
     vars.put("FORGE", if (modPlatform.isForge) 1 else 0)
@@ -40,7 +46,7 @@ preprocess {
     ))
 }
 
-loom {
+configure<LoomGradleExtensionAPI> {
     runs {
         named("client") {
             ideConfigGenerated(true)
@@ -58,10 +64,7 @@ loom {
 }
 
 java {
-    val javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
-    }
+    toolchain.languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
 
     // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
     // if it is present.
@@ -69,8 +72,11 @@ java {
     //withSourcesJar()
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.release.set(targetJavaVersion)
+}
 
-fabricApi {
+configure<FabricApiExtension> {
     configureDataGeneration {
         client = true
     }
@@ -81,22 +87,7 @@ repositories {
 }
 
 dependencies {
-    /*minecraft("com.mojang:minecraft:${minecraft_version}")
-    mappings("net.fabricmc:yarn:${yarn_mappings}:v2")
-    modImplementation("net.fabricmc:fabric-loader:${loader_version}")
-
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${fabric_version}")*/
-
-    minecraft("com.mojang:minecraft:${modPlatform.mcVersionStr}")
-
-    val yarnVersion = when (modPlatform.mcVersion) {
-        12104 -> "1.21.4+build.8"
-        12105 -> "1.21.5+build.1"
-        12106 -> "1.21.6+build.1"
-        12107 -> "1.21.7+build.1"
-        12108 -> "1.21.8+build.1"
-        else -> error("No mappings defined for ${modPlatform.mcVersion}")
-    }
+    "minecraft"("com.mojang:minecraft:${modPlatform.mcVersionStr}")
 
     val fabricAPI = when (modPlatform.mcVersion) {
         12104 -> "0.119.2+1.21.4"
@@ -104,18 +95,37 @@ dependencies {
         12106 -> "0.128.0+1.21.6"
         12107 -> "0.128.2+1.21.7"
         12108 -> "0.130.0+1.21.8"
+        260200 -> "0.156.0+26.2"
         else -> error("No API version defined for ${modPlatform.mcVersion}")
     }
 
-    mappings("net.fabricmc:yarn:${yarnVersion}:v2")
+    if (modPlatform.isObfuscated) {
+        val yarnVersion = when (modPlatform.mcVersion) {
+            12104 -> "1.21.4+build.8"
+            12105 -> "1.21.5+build.1"
+            12106 -> "1.21.6+build.1"
+            12107 -> "1.21.7+build.1"
+            12108 -> "1.21.8+build.1"
+            else -> error("No mappings defined for ${modPlatform.mcVersion}")
+        }
 
-    modImplementation("net.fabricmc:fabric-loader:${loader_version}")
-    modImplementation("net.fabricmc.fabric-api:fabric-api:${fabricAPI}")
+        "mappings"("net.fabricmc:yarn:${yarnVersion}:v2")
 
-    compileOnly("org.projectlombok:lombok:1.18.32")
-    annotationProcessor("org.projectlombok:lombok:1.18.32")
-    testCompileOnly("org.projectlombok:lombok:1.18.32")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.32")
+        // Mod dependencies have to be remapped from intermediary to the mappings used here.
+        "modImplementation"("net.fabricmc:fabric-loader:${loaderVersion}")
+        "modImplementation"("net.fabricmc.fabric-api:fabric-api:${fabricAPI}")
+    } else {
+        // Nothing to remap on unobfuscated versions, so these are plain dependencies.
+        implementation("net.fabricmc:fabric-loader:${loaderVersion}")
+        implementation("net.fabricmc.fabric-api:fabric-api:${fabricAPI}")
+    }
+
+    // 1.18.32 blows up on Java 25 (ExceptionInInitializerError in lombok.permit.Permit)
+    val lombok = "org.projectlombok:lombok:1.18.46"
+    compileOnly(lombok)
+    annotationProcessor(lombok)
+    testCompileOnly(lombok)
+    testAnnotationProcessor(lombok)
 }
 
 // Function to get the range of mc versions supported by a version we are building for.
@@ -124,6 +134,7 @@ val supportedVersionRange: Pair<String, String?> = when (modPlatform.mcVersion) 
     12104 -> "1.21.4" to "1.21.4"
     12105 -> "1.21.5" to "1.21.5"
     12106 -> "1.21.6" to "1.21.8"
+    260200 -> "26.2" to "26.2"
     else -> error("Undefined version range for ${modPlatform.mcVersion}")
 }
 
@@ -137,19 +148,18 @@ val fabricMcVersionRange: String =
 val forgeMcVersionRange: String =
     "[${supportedVersionRange.first},${supportedVersionRange.second?.let { "$it]" } ?: ")"}"
 
-val shade: Configuration by configurations.creating {
-    configurations.implementation.get().extendsFrom(this)
-}
-
 val archives_base_name: String by project
 base.archivesName = "$archives_base_name ($prettyVersionRange)"
+
+// Remapping Loom produces the shippable jar in `remapJar`; without remapping the plain `jar` task is it.
+val outputJarTaskName = if (modPlatform.isObfuscated) "remapJar" else "jar"
 
 tasks {
     processResources {
         val properties = mapOf(
             "version" to mod_version,
             "minecraft_version" to fabricMcVersionRange,
-            "loader_version" to loader_version
+            "loader_version" to loaderVersion
         )
 
         filesMatching(listOf("fabric.mod.json", "META-INF/mods.toml")) {
@@ -159,18 +169,11 @@ tasks {
         inputs.properties(properties)
         exclude("META-INF/mods.toml", "pack.mcmeta")
     }
-    shadowJar {
-        archiveClassifier.set("dev")
-        configurations = listOf(shade)
-    }
-    remapJar {
-        //input.set(shadowJar.get().archiveFile)
-        //archiveClassifier.set("")
+    named(outputJarTaskName) {
         finalizedBy("copyJar")
     }
     register<Copy>("copyJar") {
-        File("${project.rootDir}/jars").mkdir()
-        from(remapJar.get().archiveFile)
+        from(named<AbstractArchiveTask>(outputJarTaskName).flatMap { it.archiveFile })
         into("${project.rootDir}/jars")
     }
     clean { delete("${project.rootDir}/jars") }
@@ -191,6 +194,9 @@ data class Platform(
     val isNeoForge = loader == Loader.NeoForge
     val isForgeLike = loader == Loader.Forge || loader == Loader.NeoForge
     val isLegacy = mcVersion <= 11202
+
+    // Minecraft dropped obfuscation with 26.1; from there on there are no mappings to remap against.
+    val isObfuscated = mcMajor < 26
 
     override fun toString(): String {
         return "$mcVersionStr-$loaderStr"

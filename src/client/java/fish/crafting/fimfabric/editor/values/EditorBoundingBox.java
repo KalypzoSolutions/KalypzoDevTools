@@ -6,7 +6,7 @@ import fish.crafting.fimfabric.settings.BoundingBoxSettings;
 import fish.crafting.fimfabric.tools.*;
 import fish.crafting.fimfabric.tools.selector.ScreenSelector;
 import fish.crafting.fimfabric.tools.selector.WorldSelector;
-import net.minecraft.util.Pair;
+import fish.crafting.fimfabric.util.Pair;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.NotNull;

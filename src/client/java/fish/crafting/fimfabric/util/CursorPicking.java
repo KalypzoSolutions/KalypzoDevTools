@@ -85,7 +85,7 @@ public class CursorPicking {
 
         return KeyUtil.isControlPressed() &&
                 !client.mouse.isCursorLocked() &&
-                client.currentScreen instanceof ChatScreen;
+                McCompat.currentScreen() instanceof ChatScreen;
     }
 
     public static BlockHitResult raycast(){

@@ -2,7 +2,6 @@ package fish.crafting.fimfabric.util;
 
 import fish.crafting.fimfabric.connection.ConnectionManager;
 import fish.crafting.fimfabric.mixin.WorldAccessor;
-import net.fabricmc.loader.impl.lib.sat4j.core.Vec;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;

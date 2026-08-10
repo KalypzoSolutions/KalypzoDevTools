@@ -2,6 +2,9 @@
   "fim.keybind.category.intellij": "FIM IntelliJ",
   "fim.keybind.category.in_game_editor": "FIM Editor",
 
+  "key.category.fim.intellij": "FIM IntelliJ",
+  "key.category.fim.in_game_editor": "FIM Editor",
+
   "keybind.fim.switch": "Switch to IntelliJ",
   "keybind.fim.confirm_edit": "Confirm Edit",
   "keybind.fim.move_tool": "Toggle Move Tool",
