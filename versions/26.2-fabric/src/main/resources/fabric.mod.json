@@ -5,10 +5,11 @@
   "name": "Fish's Integrated Minecraft",
   "description": "Adds IntelliJ integration to Minecraft.",
   "authors": [
+    "Offensichtlich",
     "ACraftingFish"
   ],
   "contact": {
-    "sources": "https://github.com/FishIntegratedMinecraft/FIM-Fabric"
+    "sources": "https://github.com/Offensichtliches/FIM-Fabric"
   },
   "license": "MIT License",
   "icon": "assets/fim/icon.png",
