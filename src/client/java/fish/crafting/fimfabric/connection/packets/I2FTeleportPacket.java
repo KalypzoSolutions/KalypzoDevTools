@@ -30,7 +30,7 @@ public class I2FTeleportPacket implements InPacket {
 
         float pitch = 0f, yaw = 0f;
         boolean hasRot = stream.readBoolean();
-        if(hasRot) {
+        if (hasRot) {
             pitch = stream.readFloat();
             yaw = stream.readFloat();
         }
@@ -38,30 +38,30 @@ public class I2FTeleportPacket implements InPacket {
         String world = stream.readUTF();
 
         MinecraftClient client = MinecraftClient.getInstance();
-        if(client.player == null) return;
+        if (client.player == null) return;
 
         ClientPlayNetworkHandler networkHandler = client.player.networkHandler;
-        if(networkHandler == null) return;
+        if (networkHandler == null) return;
 
         //Setup teleport command
-        String teleportCommand = "teleport @s " + x + " " + y + " " + z;
-        if(hasRot) {
+        String teleportCommand = "minecraft:teleport @s " + x + " " + y + " " + z;
+        if (hasRot) {
             teleportCommand += " " + (double) yaw + " " + (double) pitch;
         }
 
-        if(!world.isEmpty()){
-            teleportCommand = "execute in " + world + " run " + teleportCommand;
+        if (!world.isEmpty()) {
+            teleportCommand = "minecraft:execute in " + world + " run " + teleportCommand;
         }
 
         //If the packet has a rotation, or the player is just far away, teleport.
-        if(hasRot || client.player.squaredDistanceTo(x, y, z) > (6 * 6)) {
+        if (hasRot || client.player.squaredDistanceTo(x, y, z) > (6 * 6)) {
             PlayerUtil.sendCommand(teleportCommand);
         }
 
         //If the packet doesn't have a rotation, make the player face the specified location
-        if(!hasRot) {
+        if (!hasRot) {
             double facingY = y - client.player.getEyeHeight(client.player.getPose());
-            PlayerUtil.sendCommand("rotate @s facing " + x + " " + facingY + " " + z);
+            PlayerUtil.sendCommand("minecraft:rotate @s facing " + x + " " + facingY + " " + z);
         }
 
     }

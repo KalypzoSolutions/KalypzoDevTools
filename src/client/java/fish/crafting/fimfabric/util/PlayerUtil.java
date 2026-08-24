@@ -19,7 +19,7 @@ public class PlayerUtil {
     }
 
     public static void teleportTo(double x, double y, double z){
-        sendCommand("teleport @s " + x + " " + y + " " + z);
+        sendCommand("minecraft:teleport @s " + x + " " + y + " " + z);
     }
 
 }
