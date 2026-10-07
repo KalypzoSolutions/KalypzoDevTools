@@ -6,6 +6,7 @@ import fish.crafting.fimfabric.listener.KeybindTickListener;
 import fish.crafting.fimfabric.connection.packetsystem.PacketManager;
 import fish.crafting.fimfabric.keybind.*;
 import fish.crafting.fimfabric.rendering.world.WorldRenderingManager;
+import fish.crafting.fimfabric.titleoffset.TitleOffsetEditor;
 import fish.crafting.fimfabric.tools.render.ToolRenderingManager;
 import fish.crafting.fimfabric.util.SoundManager;
 import net.fabricmc.api.ClientModInitializer;
@@ -40,6 +41,7 @@ public class FIMModClient implements ClientModInitializer {
 
         ToolRenderingManager.get();
         WorldRenderingManager.get();
+        TitleOffsetEditor.get();
         SoundEvent aSwitch = SoundManager.SWITCH;
     }
 }

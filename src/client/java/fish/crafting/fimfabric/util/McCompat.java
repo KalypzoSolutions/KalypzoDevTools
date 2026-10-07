@@ -2,9 +2,13 @@ package fish.crafting.fimfabric.util;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ClickableWidget;
+import net.minecraft.text.Style;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * The handful of Minecraft calls that moved rather than just being renamed, so the rest of the
@@ -69,6 +73,28 @@ public class McCompat {
         //$$ setScreen(new net.minecraft.client.gui.screens.ChatScreen("", false));
         //#else
         setScreen(new net.minecraft.client.gui.screen.ChatScreen(""));
+        //#endif
+    }
+
+    /**
+     * Fonts are a FontDescription in 26.2, of which a font file is only one kind.
+     */
+    public static boolean isDefaultFont(Style style){
+        //#if MC>=260200
+        //$$ return net.minecraft.network.chat.FontDescription.DEFAULT.equals(style.getFont());
+        //#else
+        return Style.DEFAULT_FONT_ID.equals(style.getFont());
+        //#endif
+    }
+
+    /**
+     * The widgets of a screen, which mods may add to. Fabric renamed the method in 26.2.
+     */
+    public static List<ClickableWidget> screenWidgets(Screen screen){
+        //#if MC>=260200
+        //$$ return net.fabricmc.fabric.api.client.screen.v1.Screens.getWidgets(screen);
+        //#else
+        return net.fabricmc.fabric.api.client.screen.v1.Screens.getButtons(screen);
         //#endif
     }
 
