@@ -5,7 +5,7 @@ import fish.crafting.fimfabric.editor.values.EditorLocation;
 import fish.crafting.fimfabric.editor.values.EditorVector;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.io.IOException;
 public class ConnectionUtils {
 
     public static void writeVector(ByteBufOutputStream stream, EditorVector vector) throws IOException {
-        Vec3d vec = vector.vector;
+        Vec3 vec = vector.vector;
         stream.writeDouble(vec.x);
         stream.writeDouble(vec.y);
         stream.writeDouble(vec.z);

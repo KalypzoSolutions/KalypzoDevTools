@@ -1,8 +1,8 @@
 package fish.crafting.fimfabric.rendering.custom;
 
 import fish.crafting.fimfabric.util.ColorUtil;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.awt.*;
 
@@ -51,7 +51,7 @@ public interface RenderContext3D {
         );
     }
 
-    default void renderBoxOutline(Box box, float red, float green, float blue, float alpha) {
+    default void renderBoxOutline(AABB box, float red, float green, float blue, float alpha) {
         renderBoxOutline(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, red, green, blue, alpha);
     }
 
@@ -60,7 +60,7 @@ public interface RenderContext3D {
                          float red, float green, float blue, float alpha);
 
 
-    Vec3d camera();
+    Vec3 camera();
 
     void translate(double x, double y, double z);
 
@@ -69,7 +69,7 @@ public interface RenderContext3D {
     }
 
     default void translateCamera() {
-        Vec3d vec3d = camera();
+        Vec3 vec3d = camera();
         translate(-vec3d.x, -vec3d.y, -vec3d.z);
     }
 

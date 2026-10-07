@@ -1,6 +1,5 @@
 package fish.crafting.fimfabric.ui.actions;
 
-import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.rendering.custom.ScreenRenderContext;
 import fish.crafting.fimfabric.ui.FancyText;
 import fish.crafting.fimfabric.ui.UIComponent;
@@ -8,8 +7,8 @@ import fish.crafting.fimfabric.util.ClickContext;
 import fish.crafting.fimfabric.util.MouseUtil;
 import fish.crafting.fimfabric.util.WindowUtil;
 import lombok.Getter;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,8 +46,6 @@ public class UIActionList extends UIComponent {
         int height = heightPerElement();
         context.drawBorder(renderX - 1, renderY, renderWidth + 1, height * enabledElementCount, 0xFFFFFFFF);
 
-        context.previousLayer();
-
         if(title != null){
             context.fill(
                     renderX,
@@ -65,8 +62,8 @@ public class UIActionList extends UIComponent {
                     height + 1,
                     0xFFFFFFFF);
 
-            TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-            int centerY = renderY - height / 2 - textRenderer.fontHeight / 2;
+            Font textRenderer = Minecraft.getInstance().font;
+            int centerY = renderY - height / 2 - textRenderer.lineHeight / 2;
 
             title.render(context,
                     renderX + X_PADDING,
@@ -116,7 +113,7 @@ public class UIActionList extends UIComponent {
     }
 
     private int heightPerElement(){
-        return (int) (MinecraftClient.getInstance().textRenderer.fontHeight * 1.5 + 1);
+        return (int) (Minecraft.getInstance().font.lineHeight * 1.5 + 1);
     }
 
     public void showListAtMouse(){
@@ -163,7 +160,7 @@ public class UIActionList extends UIComponent {
         expand(null, null);
         if(returnToGameScreenAfter && wasEnabled){
             returnToGameScreenAfter = false;
-            McCompat.setScreen(null);
+            Minecraft.getInstance().gui.setScreen(null);
         }
     }
 

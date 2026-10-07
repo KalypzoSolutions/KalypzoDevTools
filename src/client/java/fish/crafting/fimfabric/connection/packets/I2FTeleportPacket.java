@@ -3,8 +3,8 @@ package fish.crafting.fimfabric.connection.packets;
 import fish.crafting.fimfabric.connection.packetsystem.InPacket;
 import fish.crafting.fimfabric.util.PlayerUtil;
 import io.netty.buffer.ByteBufInputStream;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientPacketListener;
 
 import java.io.IOException;
 
@@ -37,10 +37,10 @@ public class I2FTeleportPacket implements InPacket {
 
         String world = stream.readUTF();
 
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if (client.player == null) return;
 
-        ClientPlayNetworkHandler networkHandler = client.player.networkHandler;
+        ClientPacketListener networkHandler = client.player.connection;
         if (networkHandler == null) return;
 
         //Setup teleport command
@@ -54,7 +54,7 @@ public class I2FTeleportPacket implements InPacket {
         }
 
         //If the packet has a rotation, or the player is just far away, teleport.
-        if (hasRot || client.player.squaredDistanceTo(x, y, z) > (6 * 6)) {
+        if (hasRot || client.player.distanceToSqr(x, y, z) > (6 * 6)) {
             PlayerUtil.sendCommand(teleportCommand);
         }
 

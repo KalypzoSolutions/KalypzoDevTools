@@ -1,28 +1,28 @@
 package fish.crafting.fimfabric.util;
 
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public class WindowUtil {
 
     public static int scaledWidth(){
-        return MinecraftClient.getInstance().getWindow().getScaledWidth();
+        return Minecraft.getInstance().getWindow().getGuiScaledWidth();
     }
 
     public static int scaledHeight(){
-        return MinecraftClient.getInstance().getWindow().getScaledHeight();
+        return Minecraft.getInstance().getWindow().getGuiScaledHeight();
     }
 
     public static int normalWidth(){
-        return MinecraftClient.getInstance().getWindow().getWidth();
+        return Minecraft.getInstance().getWindow().getScreenWidth();
     }
 
     public static int normalHeight(){
-        return MinecraftClient.getInstance().getWindow().getHeight();
+        return Minecraft.getInstance().getWindow().getScreenHeight();
     }
 
     public static int guiScale(){
-        Integer value = MinecraftClient.getInstance().options.getGuiScale().getValue();
-        return MinecraftClient.getInstance().getWindow().calculateScaleFactor(value, false);
+        Integer value = Minecraft.getInstance().options.guiScale().get();
+        return Minecraft.getInstance().getWindow().calculateScale(value, false);
     }
 
 }

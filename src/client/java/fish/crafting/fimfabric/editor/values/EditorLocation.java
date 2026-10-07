@@ -10,20 +10,20 @@ import fish.crafting.fimfabric.tools.ToolManager;
 import fish.crafting.fimfabric.tools.selector.WorldSelector;
 import fish.crafting.fimfabric.util.VectorUtils;
 import lombok.Getter;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorLocation implements Referenced, PosRotated {
 
     private final WorldSelector selector = new Selector();
-    public @NotNull Vec3d vector = new Vec3d(0, 0, 0);
+    public @NotNull Vec3 vector = new Vec3(0, 0, 0);
     public float pitch = 0f, yaw = 0f;
     public String world = "";
 
     @Getter
-    private @NotNull Vec3d direction = new Vec3d(1.0, 0.0, 0.0);
-    private @NotNull Box box = new Box(0, 0, 0, 0, 0, 0);
+    private @NotNull Vec3 direction = new Vec3(1.0, 0.0, 0.0);
+    private @NotNull AABB box = new AABB(0, 0, 0, 0, 0, 0);
     private final EditorReference reference = new EditorReference();
     public int lastRenderFrame = 0;
 
@@ -40,13 +40,13 @@ public class EditorLocation implements Referenced, PosRotated {
     }
 
     public void setVector(double x, double y, double z){
-        this.vector = new Vec3d(x, y, z);
+        this.vector = new Vec3(x, y, z);
         updateBox();
     }
 
     public void updateBox(){
         double d = VectorSettings.renderSize();
-        this.box = new Box(
+        this.box = new AABB(
                 vector.x - d,
                 vector.y - d,
                 vector.z - d,
@@ -66,7 +66,7 @@ public class EditorLocation implements Referenced, PosRotated {
     }
 
     @Override
-    public Vec3d getPos() {
+    public Vec3 getPos() {
         return vector;
     }
 
@@ -113,7 +113,7 @@ public class EditorLocation implements Referenced, PosRotated {
         }
 
         @Override
-        public Box getBox() {
+        public AABB getBox() {
             return box;
         }
     }

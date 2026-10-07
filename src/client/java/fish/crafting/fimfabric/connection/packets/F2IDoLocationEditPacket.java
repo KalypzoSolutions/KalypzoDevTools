@@ -4,7 +4,7 @@ import fish.crafting.fimfabric.connection.packetsystem.OutPacket;
 import fish.crafting.fimfabric.connection.packetsystem.PacketId;
 import fish.crafting.fimfabric.editor.values.EditorLocation;
 import io.netty.buffer.ByteBufOutputStream;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 
 import java.io.IOException;
 
@@ -24,7 +24,7 @@ public class F2IDoLocationEditPacket extends OutPacket {
 
     @Override
     protected void write(ByteBufOutputStream stream) throws IOException {
-        Vec3d pos = location.getPos();
+        Vec3 pos = location.getPos();
 
         int decimals = 3; //Oh god
         int mul = (int) Math.pow(10, decimals);

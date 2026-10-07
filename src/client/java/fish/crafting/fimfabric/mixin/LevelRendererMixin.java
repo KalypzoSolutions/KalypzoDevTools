@@ -14,13 +14,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-//26.2
-//
-// The camera is passed as a CameraRenderState now and there is only one matrix parameter left; the
-// projection matrix lives on the camera state. RenderSystem#getModelViewMatrix is gone, but the
-// model view matrix is exactly what gets handed in here, so CursorPicking can take it directly.
+// The model view matrix is exactly what gets handed in here, so CursorPicking can take it
+// directly; the projection matrix lives on the camera state.
 @Mixin(LevelRenderer.class)
-public class WorldRendererMixin {
+public class LevelRendererMixin {
 
     private static final Matrix4f IDENTITY = new Matrix4f().identity();
 

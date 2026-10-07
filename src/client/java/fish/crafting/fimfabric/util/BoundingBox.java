@@ -1,7 +1,7 @@
 package fish.crafting.fimfabric.util;
 
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Optional;
 
@@ -32,19 +32,19 @@ public class BoundingBox {
         this.maxZ = Math.max(z1, z2);
     }
 
-    public void change(Vec3d vec1, Vec3d vec2){
+    public void change(Vec3 vec1, Vec3 vec2){
         change(vec1.x, vec1.y, vec1.z, vec2.x, vec2.y, vec2.z);
     }
 
-    public Box toMCBox() {
-        return new Box(
+    public AABB toMCBox() {
+        return new AABB(
                 minX, minY, minZ,
                 maxX, maxY, maxZ
         );
     }
 
-    public Optional<Vec3d> raycast(Vec3d vec3d, Vec3d vec3d2) {
-        return Box.raycast(
+    public Optional<Vec3> raycast(Vec3 vec3d, Vec3 vec3d2) {
+        return AABB.clip(
                 minX, minY, minZ,
                 maxX, maxY, maxZ,
                 vec3d, vec3d2);

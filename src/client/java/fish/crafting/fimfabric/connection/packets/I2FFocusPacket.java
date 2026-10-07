@@ -1,25 +1,27 @@
 package fish.crafting.fimfabric.connection.packets;
 
-import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.connection.packetsystem.InPacket;
 import fish.crafting.fimfabric.rendering.RenderingManager;
 import io.netty.buffer.ByteBufInputStream;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.screen.GameMenuScreen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.PauseScreen;
+import net.minecraft.client.gui.screens.Screen;
 
 import java.io.IOException;
 
 public class I2FFocusPacket implements InPacket {
     @Override
     public void readAndExecute(ByteBufInputStream stream) throws IOException {
-        MinecraftClient instance = MinecraftClient.getInstance();
+        Gui gui = Minecraft.getInstance().gui;
+        Screen screen = gui.screen();
 
-        if(McCompat.currentScreen() == null) return; //Already focused in-game
+        if(screen == null) return; //Already focused in-game
 
-        if(McCompat.currentScreen() instanceof ChatScreen || McCompat.currentScreen() instanceof GameMenuScreen) {
+        if(screen instanceof ChatScreen || screen instanceof PauseScreen) {
             RenderingManager.get().addTask(() -> {
-                McCompat.setScreen(null);
+                gui.setScreen(null);
             });
         }
     }

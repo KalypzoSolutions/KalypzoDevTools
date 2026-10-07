@@ -2,7 +2,7 @@ package fish.crafting.fimfabric.listener;
 
 import fish.crafting.fimfabric.keybind.CustomKeybind;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public class KeybindTickListener implements ClientTickEvents.EndTick {
 
@@ -14,9 +14,9 @@ public class KeybindTickListener implements ClientTickEvents.EndTick {
     }
 
     @Override
-    public void onEndTick(MinecraftClient client) {
+    public void onEndTick(Minecraft client) {
         for (CustomKeybind keybind : keybinds) {
-            if(keybind.keyBinding.wasPressed()) {
+            if(keybind.keyBinding.consumeClick()) {
                 keybind.onPressed();
             }
         }

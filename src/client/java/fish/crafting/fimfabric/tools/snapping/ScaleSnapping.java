@@ -4,7 +4,7 @@ import fish.crafting.fimfabric.tools.PosScaled;
 import fish.crafting.fimfabric.tools.render.ToolAxis;
 import fish.crafting.fimfabric.util.render.CombinedFadeTracker;
 import lombok.Getter;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ScaleSnapping {
@@ -17,7 +17,7 @@ public abstract class ScaleSnapping {
             double scale = axis.getValueFromUnit(scaled.scaleVec());
 
             pos -= scale;
-            pos = MathHelper.floor(pos);
+            pos = Mth.floor(pos);
             pos += scale;
 
             return pos;
@@ -38,7 +38,7 @@ public abstract class ScaleSnapping {
     HALF_BLOCK = new ScaleSnapping("Total 0.5") {
         @Override
         public double snap(PosScaled scaled, ToolAxis axis, double pos) {
-            return MathHelper.floor(pos);
+            return Mth.floor(pos);
         }
     },
     FULL_BLOCK = new ScaleSnapping("Total 1.0") {

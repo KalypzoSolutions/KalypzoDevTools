@@ -1,11 +1,11 @@
 package fish.crafting.fimfabric.titleoffset;
 
-import fish.crafting.fimfabric.util.McCompat;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ public class TitleOffsetModel {
     @Getter
     private final List<Slot> slots = new ArrayList<>();
 
-    public TitleOffsetModel(Text title){
+    public TitleOffsetModel(Component title){
         //Styles arrive already resolved against their parents, so the parts can be rebuilt flat
         title.visit((style, text) -> {
             split(style, text);
@@ -34,7 +34,7 @@ public class TitleOffsetModel {
 
     private void split(Style style, String text){
         //The same code points can be image glyphs in any other font
-        if(!McCompat.isDefaultFont(style)){
+        if(!FontDescription.DEFAULT.equals(style.getFont())){
             parts.add(new Part(style, text, null));
             return;
         }
@@ -94,13 +94,13 @@ public class TitleOffsetModel {
         return label;
     }
 
-    public Text build(){
-        MutableText title = Text.empty();
+    public Component build(){
+        MutableComponent title = Component.empty();
         for(Part part : parts){
             String text = part.slot == null ? part.text : OffsetGlyphs.encode(part.slot.value);
             if(text.isEmpty()) continue;
 
-            title.append(Text.literal(text).setStyle(part.style));
+            title.append(Component.literal(text).setStyle(part.style));
         }
         return title;
     }

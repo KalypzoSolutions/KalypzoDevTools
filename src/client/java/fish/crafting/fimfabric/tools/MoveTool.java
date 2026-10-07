@@ -15,13 +15,13 @@ import fish.crafting.fimfabric.tools.selector.WorldSelectorManager;
 import fish.crafting.fimfabric.ui.TexRegistry;
 import fish.crafting.fimfabric.util.*;
 import fish.crafting.fimfabric.util.render.FadeTracker;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class MoveTool extends CustomTool<Positioned> {
     private ToolAxis editingAxis = null;
     private final FadeTracker fadingText = new FadeTracker(0, 0.3, 0.1);
     private static final FadeTracker snapTextFade = new FadeTracker(0, 0.1, 0.3);
-    private Vec3d startPos = null;
+    private Vec3 startPos = null;
     private Positioned lastRendered = null;
 
     public MoveTool(){
@@ -77,7 +77,7 @@ public class MoveTool extends CustomTool<Positioned> {
         editingAxis = null;
     }
 
-    private void startEditingPosDirectly(@NotNull Positioned positioned, Vec3d camera){
+    private void startEditingPosDirectly(@NotNull Positioned positioned, Vec3 camera){
         this.editingPos = true;
         this.editingDistance = camera.distanceTo(positioned.getPos());
         this.editingAxis = null;
@@ -92,7 +92,7 @@ public class MoveTool extends CustomTool<Positioned> {
 
     public void vectorClickCallback(Positioned positioned, boolean click){
         if(click) {
-            Vec3d camera = MinecraftClient.getInstance().gameRenderer.getCamera().getPos();
+            Vec3 camera = Minecraft.getInstance().gameRenderer.mainCamera().position();
             startEditingPosDirectly(positioned, camera);
         }else{
             stopEditing();
@@ -100,8 +100,8 @@ public class MoveTool extends CustomTool<Positioned> {
     }
 
     @Override
-    public void render2D(ScreenRenderContext context, RenderTickCounter counter) {
-        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+    public void render2D(ScreenRenderContext context, DeltaTracker counter) {
+        Font textRenderer = Minecraft.getInstance().font;
 
         int windowWidth = WindowUtil.scaledWidth();
         int snappingWidth = 90;
@@ -177,14 +177,14 @@ public class MoveTool extends CustomTool<Positioned> {
             context.drawCenteredTextWithShadow(
                     "After: " + stringify(lastRendered.getPos()),
                     WindowUtil.scaledWidth() / 2,
-                    (int) (40 + textRenderer.fontHeight * 1.5),
+                    (int) (40 + textRenderer.lineHeight * 1.5),
                     0xEE89C2FF
             );
 
             context.drawCenteredTextWithShadow(
                     "Press ENTER to confirm edit.",
                     WindowUtil.scaledWidth() / 2,
-                    (int) (40 + textRenderer.fontHeight * 3),
+                    (int) (40 + textRenderer.lineHeight * 3),
                     0xEE89FF93
             );
 
@@ -192,14 +192,14 @@ public class MoveTool extends CustomTool<Positioned> {
                 context.drawCenteredTextWithShadow(
                         "Won't clear and return to IntelliJ",
                         WindowUtil.scaledWidth() / 2,
-                        (int) (40 + textRenderer.fontHeight * 4.5),
+                        (int) (40 + textRenderer.lineHeight * 4.5),
                         0xAAFF0000
                 );
             }
         }
     }
 
-    private String stringify(Vec3d pos){
+    private String stringify(Vec3 pos){
         return "[" + NumUtil.betterNumber(pos.x) + ", " + NumUtil.betterNumber(pos.y) + ", " + NumUtil.betterNumber(pos.z) + "]";
     }
 
@@ -214,10 +214,10 @@ public class MoveTool extends CustomTool<Positioned> {
         context.translateCamera();
 
         if(this.editingPos) {
-            Vec3d pos = obj.getPos();
-            int x = MathHelper.floor(pos.x);
-            int y = MathHelper.floor(pos.y);
-            int z = MathHelper.floor(pos.z);
+            Vec3 pos = obj.getPos();
+            int x = Mth.floor(pos.x);
+            int y = Mth.floor(pos.y);
+            int z = Mth.floor(pos.z);
 
             context.renderFilledBox(
                     x, y, z,
@@ -234,10 +234,10 @@ public class MoveTool extends CustomTool<Positioned> {
 
         context.pop();
 
-        Vec3d camera = context.camera();
+        Vec3 camera = context.camera();
 
-        if(MinecraftClient.getInstance().player != null && editingPos){
-            Vec3d rot = MinecraftClient.getInstance().player.getRotationVec(context.tickDelta());
+        if(Minecraft.getInstance().player != null && editingPos){
+            Vec3 rot = Minecraft.getInstance().player.getViewVector(context.tickDelta());
 
             if(editingAxis != null){
                 Double coord = getPlaneIntersectionCoordinate(
@@ -264,7 +264,7 @@ public class MoveTool extends CustomTool<Positioned> {
                     obj.setPos(x, y, z);
                 }
             }else{
-                Vec3d newPos = camera.add(rot.multiply(editingDistance));
+                Vec3 newPos = camera.add(rot.scale(editingDistance));
 
                 double x = SNAPPING.snapXZ(newPos.x);
                 double y = SNAPPING.snapY(newPos.y);
@@ -288,10 +288,10 @@ public class MoveTool extends CustomTool<Positioned> {
         }
 
         for (ToolAxis value : ToolAxis.values()) {
-            Vec3d u = value.unit.multiply(zoom * (handlePartLength + headPartLength));
+            Vec3 u = value.unit.scale(zoom * (handlePartLength + headPartLength));
 
-            Vec3d origin = obj.getPos().add(value.unit.multiply((offsetFromCenter - handlePartLength) * zoom));
-            Vec3d a = value.oppositeUnit.multiply(headPartWidth * 0.8 * zoom);
+            Vec3 origin = obj.getPos().add(value.unit.scale((offsetFromCenter - handlePartLength) * zoom));
+            Vec3 a = value.oppositeUnit.scale(headPartWidth * 0.8 * zoom);
 
             BoundingBox box = axisBoundingBoxes[value.ordinal()];
             box.change(
@@ -318,7 +318,7 @@ public class MoveTool extends CustomTool<Positioned> {
     private void renderHandle(RenderContext3D context,
                               ToolAxis facing,
                               double zoom,
-                              Vec3d position,
+                              Vec3 position,
                               int color){
         context.push();
         context.translateCamera();
@@ -327,7 +327,7 @@ public class MoveTool extends CustomTool<Positioned> {
 
         int angles = 9;
         double rotate = Math.TAU / (angles);
-        Vec3d unit = facing.unit;
+        Vec3 unit = facing.unit;
 
         double x = unit.x * handlePartWidth * zoom;
         double y = unit.y * handlePartWidth * zoom;
@@ -374,7 +374,7 @@ public class MoveTool extends CustomTool<Positioned> {
     private void renderHead(RenderContext3D context,
                             ToolAxis facing,
                             double zoom,
-                            Vec3d position,
+                            Vec3 position,
                             int color){
         context.push();
         context.translateCamera();
@@ -383,7 +383,7 @@ public class MoveTool extends CustomTool<Positioned> {
 
         int angles = 36;
         double rotate = Math.TAU / (angles);
-        Vec3d unit = facing.unit;
+        Vec3 unit = facing.unit;
 
         double x = unit.x * headPartWidth * zoom;
         double y = unit.y * headPartWidth * zoom;
@@ -394,7 +394,7 @@ public class MoveTool extends CustomTool<Positioned> {
         double anchorZ = position.z + unit.z * offsetFromCenter * zoom;
 
         //sin0 = 0, cos0 = 1
-        Vec3d firstAnglePos = new Vec3d(
+        Vec3 firstAnglePos = new Vec3(
                 0, z, y
         );
 
@@ -484,9 +484,9 @@ public class MoveTool extends CustomTool<Positioned> {
      */
     private Double getPlaneIntersectionCoordinate(Positioned positioned,
                                                   ToolAxis planeFacing,
-                                                  Vec3d camera,
-                                                  Vec3d facing){
-        Vec3d vec3d = VectorUtils.lineIntersection(
+                                                  Vec3 camera,
+                                                  Vec3 facing){
+        Vec3 vec3d = VectorUtils.lineIntersection(
                 positioned.getPos(),
                 facing.multiply(planeFacing.oppositeUnit).normalize(),
                 camera,
@@ -579,7 +579,7 @@ public class MoveTool extends CustomTool<Positioned> {
         }
 
         @Override
-        public Box getBox() {
+        public AABB getBox() {
             return boundingBox.toMCBox();
         }
     }

@@ -1,11 +1,17 @@
+# Check these on https://fabricmc.net/develop
 [versions]
+minecraft = "26.2"
+fabric-loader = "0.19.3"
+fabric-api = "0.156.0+26.2"
 loom = "1.17.19"
-preprocessor = "221276c"
+# 1.18.32 blows up on Java 25 (ExceptionInInitializerError in lombok.permit.Permit)
+lombok = "1.18.46"
+
+[libraries]
+minecraft = { module = "com.mojang:minecraft", version.ref = "minecraft" }
+fabric-loader = { module = "net.fabricmc:fabric-loader", version.ref = "fabric-loader" }
+fabric-api = { module = "net.fabricmc.fabric-api:fabric-api", version.ref = "fabric-api" }
+lombok = { module = "org.projectlombok:lombok", version.ref = "lombok" }
 
 [plugins]
-# Non-remapping Loom, for unobfuscated Minecraft (26.1+)
 loom = { id = "net.fabricmc.fabric-loom", version.ref = "loom" }
-# Remapping Loom, for obfuscated Minecraft (1.21.11 and older)
-loomRemap = { id = "net.fabricmc.fabric-loom-remap", version.ref = "loom" }
-preprocessor = { id = "com.replaymod.preprocess", version.ref = "preprocessor" }
-preprocessorRoot = { id = "com.replaymod.preprocess-root", version.ref = "preprocessor" }

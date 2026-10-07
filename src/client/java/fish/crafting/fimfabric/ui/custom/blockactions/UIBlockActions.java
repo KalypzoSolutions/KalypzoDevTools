@@ -1,22 +1,21 @@
 package fish.crafting.fimfabric.ui.custom.blockactions;
 
-import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.ui.FancyText;
 import fish.crafting.fimfabric.ui.actions.UIActionList;
 import fish.crafting.fimfabric.util.ActionUtils;
 import fish.crafting.fimfabric.util.CursorPicking;
 import fish.crafting.fimfabric.util.LocationUtils;
 import fish.crafting.fimfabric.util.VectorUtils;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 public class UIBlockActions extends UIActionList {
 
-    public static Vec3d storedRayPos = Vec3d.ZERO;
+    public static Vec3 storedRayPos = Vec3.ZERO;
     public static BlockPos storedRayBlockPos = new BlockPos(0, 0, 0);
 
     public UIBlockActions() {
@@ -24,7 +23,7 @@ public class UIBlockActions extends UIActionList {
 
         title(FancyText.of("Block Actions"));
         addRunElement(FancyText.vector("Copy Center Vector"), ctx -> {
-            Vec3d pos = McCompat.centerOf(storedRayBlockPos);
+            Vec3 pos = Vec3.atCenterOf(storedRayBlockPos);
             ActionUtils.copyIfClick(ctx, () -> VectorUtils.toString(pos));
         });
 
@@ -35,24 +34,24 @@ public class UIBlockActions extends UIActionList {
         addSeparator();
 
         addRunElement(FancyText.coords("Copy Center Coordinates"), ctx -> {
-            Vec3d pos = McCompat.centerOf(storedRayBlockPos);
+            Vec3 pos = Vec3.atCenterOf(storedRayBlockPos);
             ActionUtils.copyIfClick(ctx, () -> VectorUtils.toCoordsString(pos));
         });
 
         addRunElement(FancyText.coords("Copy Corner Coordinates"), ctx -> {
-            Vec3d pos = new Vec3d(storedRayBlockPos);
+            Vec3 pos = new Vec3(storedRayBlockPos);
             ActionUtils.copyIfClick(ctx, () -> VectorUtils.toCoordsString(pos));
         });
 
         addSeparator();
 
         addRunElement(FancyText.location("Copy Center Location"), ctx -> {
-            Vec3d pos = McCompat.centerOf(storedRayBlockPos);
+            Vec3 pos = Vec3.atCenterOf(storedRayBlockPos);
             ActionUtils.copyIfClick(ctx, () -> LocationUtils.toCoordsString(pos));
         });
 
         addRunElement(FancyText.location("Copy Corner Location"), ctx -> {
-            Vec3d pos = new Vec3d(storedRayBlockPos);
+            Vec3 pos = new Vec3(storedRayBlockPos);
             ActionUtils.copyIfClick(ctx, () -> LocationUtils.toCoordsString(pos));
         });
 
@@ -61,8 +60,8 @@ public class UIBlockActions extends UIActionList {
         addRunElement(FancyText.of("Copy BlockState"), ctx -> {
             if(!ctx.isLeftClickPress()) return;
 
-            MinecraftClient instance = MinecraftClient.getInstance();
-            ClientWorld world = instance.world;
+            Minecraft instance = Minecraft.getInstance();
+            ClientLevel world = instance.level;
             if(world == null) return;
 
             BlockState state = world.getBlockState(storedRayBlockPos);
@@ -73,13 +72,8 @@ public class UIBlockActions extends UIActionList {
                 str = str.substring(6).replaceFirst("}", "");
             }
 
-            //#if MC>=260200
-            //$$ //getValues() returns a Stream in 26.2, not a Map
-            //$$ if(state.getValues().findAny().isPresent()){ //okay now we do some freaky shit to not include default properties
-            //#else
-            if(!state.getEntries().isEmpty()){ //okay now we do some freaky shit to not include default properties
-            //#endif
-                BlockState defaultState = state.getBlock().getDefaultState();
+            if(state.getValues().findAny().isPresent()){ //okay now we do some freaky shit to not include default properties
+                BlockState defaultState = state.getBlock().defaultBlockState();
 
                 String defaultStateStr = defaultState.toString();
                 String[] split = defaultStateStr.split(",");
@@ -118,7 +112,7 @@ public class UIBlockActions extends UIActionList {
         BlockHitResult raycast = CursorPicking.raycast();
         if(raycast == null) return;
 
-        Vec3d pos = raycast.getPos();
+        Vec3 pos = raycast.getLocation();
         if(pos != null) {
             storedRayPos = pos;
         }

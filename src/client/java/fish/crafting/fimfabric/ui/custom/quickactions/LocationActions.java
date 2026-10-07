@@ -8,10 +8,10 @@ import fish.crafting.fimfabric.util.ActionUtils;
 import fish.crafting.fimfabric.util.ClickContext;
 import fish.crafting.fimfabric.util.LocationUtils;
 import fish.crafting.fimfabric.util.VectorUtils;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 public class LocationActions extends UIActionList {
 
@@ -32,11 +32,11 @@ public class LocationActions extends UIActionList {
 
         @Override
         protected void activate(ClickContext context) {
-            MinecraftClient instance = MinecraftClient.getInstance();
-            ClientPlayerEntity player = instance.player;
+            Minecraft instance = Minecraft.getInstance();
+            LocalPlayer player = instance.player;
             if(player == null) return;
 
-            ActionUtils.copyIfClick(context, () -> LocationUtils.toLocationString(player.getPos(), player.getPitch(), player.getYaw()));
+            ActionUtils.copyIfClick(context, () -> LocationUtils.toLocationString(player.position(), player.getXRot(), player.getYRot()));
         }
     }
     public static class CopyPlayerLocationGeneric extends ActionElement {
@@ -46,11 +46,11 @@ public class LocationActions extends UIActionList {
 
         @Override
         protected void activate(ClickContext context) {
-            MinecraftClient instance = MinecraftClient.getInstance();
-            ClientPlayerEntity player = instance.player;
+            Minecraft instance = Minecraft.getInstance();
+            LocalPlayer player = instance.player;
             if(player == null) return;
 
-            ActionUtils.copyIfClick(context, () -> LocationUtils.toGenericLocation(player.getPos(), player.getPitch(), player.getYaw()));
+            ActionUtils.copyIfClick(context, () -> LocationUtils.toGenericLocation(player.position(), player.getXRot(), player.getYRot()));
         }
     }
 
@@ -62,7 +62,7 @@ public class LocationActions extends UIActionList {
 
         @Override
         protected void activate(ClickContext context, BlockPos pos) {
-            ActionUtils.copyIfClick(context, () -> LocationUtils.toCoordsString(Vec3d.of(pos)));
+            ActionUtils.copyIfClick(context, () -> LocationUtils.toCoordsString(Vec3.atLowerCornerOf(pos)));
         }
     }
 
@@ -74,7 +74,7 @@ public class LocationActions extends UIActionList {
 
         @Override
         protected void activate(ClickContext context, BlockPos pos) {
-            ActionUtils.copyIfClick(context, () -> LocationUtils.toGenericCoords(Vec3d.of(pos)));
+            ActionUtils.copyIfClick(context, () -> LocationUtils.toGenericCoords(Vec3.atLowerCornerOf(pos)));
         }
     }
 }

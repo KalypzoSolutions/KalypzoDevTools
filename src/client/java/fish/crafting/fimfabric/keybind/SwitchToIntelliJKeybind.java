@@ -1,13 +1,13 @@
 package fish.crafting.fimfabric.keybind;
 
 import fish.crafting.fimfabric.connection.ConnectionManager;
-import net.minecraft.client.util.InputUtil;
+import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 
 public class SwitchToIntelliJKeybind extends CustomKeybind{
 
     public SwitchToIntelliJKeybind() {
-        super("switch", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_I, KeybindCategory.INTELLIJ);
+        super("switch", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_I, KeybindCategory.INTELLIJ);
     }
 
     @Override

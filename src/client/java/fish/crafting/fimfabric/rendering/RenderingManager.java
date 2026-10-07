@@ -1,13 +1,12 @@
 package fish.crafting.fimfabric.rendering;
 
-import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.rendering.custom.ScreenRenderContext;
 import fish.crafting.fimfabric.tools.CustomTool;
 import fish.crafting.fimfabric.tools.ToolManager;
 import fish.crafting.fimfabric.ui.InterfaceManager;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.DeltaTracker;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,8 +24,8 @@ public class RenderingManager {
         return instance == null ? new RenderingManager() : instance;
     }
 
-    public void renderOverlay(RenderTickCounter tickCounter, DrawContext mcDrawContext) {
-        if(McCompat.hasOverlay()) return; //Reloading textures bugfix
+    public void renderOverlay(DeltaTracker tickCounter, GuiGraphicsExtractor mcDrawContext) {
+        if(Minecraft.getInstance().gui.overlay() != null) return; //Reloading textures bugfix
 
         ScreenRenderContext context = new ScreenRenderContext(mcDrawContext);
 
@@ -35,12 +34,10 @@ public class RenderingManager {
 
         InformationFeedManager.get().render(context);
         InterfaceManager.get().render(context);
-
-        context.draw();
     }
 
-    public void renderInGameOverlay(DrawContext drawContext, RenderTickCounter tickCounter) {
-        if(McCompat.hasOverlay()) return; //mhm
+    public void renderInGameOverlay(GuiGraphicsExtractor drawContext, DeltaTracker tickCounter) {
+        if(Minecraft.getInstance().gui.overlay() != null) return; //mhm
 
         ScreenRenderContext context = new ScreenRenderContext(drawContext);
 

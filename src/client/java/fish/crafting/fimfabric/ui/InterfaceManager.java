@@ -1,6 +1,5 @@
 package fish.crafting.fimfabric.ui;
 
-import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.rendering.custom.ScreenRenderContext;
 import fish.crafting.fimfabric.tools.CustomTool;
 import fish.crafting.fimfabric.tools.EditorTools;
@@ -14,9 +13,9 @@ import fish.crafting.fimfabric.ui.scroll.Scroller;
 import fish.crafting.fimfabric.ui.scroll.UIScrollable;
 import fish.crafting.fimfabric.util.*;
 import lombok.Getter;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.Screen;
 import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
@@ -199,7 +198,7 @@ public class InterfaceManager {
         }
 
         if(hoveringNothingOrBase && button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == 0){
-            Screen currentScreen = McCompat.currentScreen();
+            Screen currentScreen = Minecraft.getInstance().gui.screen();
 
             if(currentScreen instanceof ChatScreen) {
                 if(CursorPicking.areBlockPickingPrerequisitesMet()){
@@ -265,7 +264,7 @@ public class InterfaceManager {
         long newCursor = getCursor();
         if (newCursor != cursor) {
             cursor = newCursor;
-            GLFW.glfwSetCursor(MinecraftClient.getInstance().getWindow().getHandle(), cursor);
+            GLFW.glfwSetCursor(Minecraft.getInstance().getWindow().handle(), cursor);
         }
     }
 

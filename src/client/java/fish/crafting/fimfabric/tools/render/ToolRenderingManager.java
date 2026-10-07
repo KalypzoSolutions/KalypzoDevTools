@@ -5,12 +5,12 @@ import fish.crafting.fimfabric.rendering.custom.RenderContext3D;
 import fish.crafting.fimfabric.tools.CustomTool;
 import fish.crafting.fimfabric.tools.Positioned;
 import fish.crafting.fimfabric.tools.ToolManager;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 public class ToolRenderingManager {
 
-    private static final Identifier TOOL_DRAW = Identifier.of(FIMModClient.NAMESPACE, "tool_draw");
+    private static final Identifier TOOL_DRAW = Identifier.fromNamespaceAndPath(FIMModClient.NAMESPACE, "tool_draw");
     private static ToolRenderingManager instance;
 
     private ToolRenderingManager() {

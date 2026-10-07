@@ -2,12 +2,12 @@ package fish.crafting.fimfabric.keybind;
 
 import fish.crafting.fimfabric.tools.EditorTools;
 import fish.crafting.fimfabric.tools.ToolManager;
-import net.minecraft.client.util.InputUtil;
+import com.mojang.blaze3d.platform.InputConstants;
 
 public class MoveToolKeybind extends CustomKeybind{
 
     public MoveToolKeybind() {
-        super("move_tool", InputUtil.Type.KEYSYM, InputUtil.UNKNOWN_KEY.getCode(), KeybindCategory.IN_GAME_EDITOR);
+        super("move_tool", InputConstants.Type.KEYSYM, InputConstants.UNKNOWN.getValue(), KeybindCategory.IN_GAME_EDITOR);
     }
 
     @Override

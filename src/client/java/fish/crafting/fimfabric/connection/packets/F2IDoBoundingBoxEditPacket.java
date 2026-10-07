@@ -5,7 +5,7 @@ import fish.crafting.fimfabric.connection.packetsystem.PacketId;
 import fish.crafting.fimfabric.editor.values.EditorBoundingBox;
 import fish.crafting.fimfabric.editor.values.EditorLocation;
 import io.netty.buffer.ByteBufOutputStream;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 
 import java.io.IOException;
 
@@ -27,8 +27,8 @@ public class F2IDoBoundingBoxEditPacket extends OutPacket {
 
     @Override
     protected void write(ByteBufOutputStream stream) throws IOException {
-        Vec3d min = box.min;
-        Vec3d max = box.max;
+        Vec3 min = box.min;
+        Vec3 max = box.max;
         stream.writeDouble(decimals(min.x));
         stream.writeDouble(decimals(min.y));
         stream.writeDouble(decimals(min.z));

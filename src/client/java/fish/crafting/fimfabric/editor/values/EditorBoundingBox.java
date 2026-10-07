@@ -7,18 +7,18 @@ import fish.crafting.fimfabric.tools.*;
 import fish.crafting.fimfabric.tools.selector.ScreenSelector;
 import fish.crafting.fimfabric.tools.selector.WorldSelector;
 import fish.crafting.fimfabric.util.Pair;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public class EditorBoundingBox implements Referenced, PosScaled {
 
-    public Vec3d min, max;
+    public Vec3 min, max;
 
     private final WorldSelector selector = new Selector();
-    public @NotNull Vec3d center = new Vec3d(0, 0, 0);
+    public @NotNull Vec3 center = new Vec3(0, 0, 0);
 
-    private @NotNull Box renderBox = new Box(0, 0, 0, 0, 0, 0);
+    private @NotNull AABB renderBox = new AABB(0, 0, 0, 0, 0, 0);
     private final EditorReference reference = new EditorReference();
     public int lastRenderFrame = 0;
     private final StretchSelector[] edgeSelectors = new StretchSelector[12];
@@ -32,12 +32,12 @@ public class EditorBoundingBox implements Referenced, PosScaled {
     }
 
     public void setValues(double x1, double y1, double z1, double x2, double y2, double z2){
-        min = new Vec3d(
+        min = new Vec3(
                 Math.min(x1, x2),
                 Math.min(y1, y2),
                 Math.min(z1, z2));
 
-        max = new Vec3d(
+        max = new Vec3(
                 Math.max(x1, x2),
                 Math.max(y1, y2),
                 Math.max(z1, z2));
@@ -48,13 +48,13 @@ public class EditorBoundingBox implements Referenced, PosScaled {
 
     private void updateEdges(){
         int i = 0;
-        for (Pair<Vec3d, Vec3d> edge : getEdges()) {
+        for (Pair<Vec3, Vec3> edge : getEdges()) {
             edgeSelectors[i++].update(edge.getLeft(), edge.getRight());
         }
     }
 
-    public Pair<Vec3d, Vec3d>[] getEdges(){
-        Pair<Vec3d, Vec3d>[] edges = new Pair[12];
+    public Pair<Vec3, Vec3>[] getEdges(){
+        Pair<Vec3, Vec3>[] edges = new Pair[12];
 
         double x = min.x;
         double y = min.y;
@@ -81,25 +81,25 @@ public class EditorBoundingBox implements Referenced, PosScaled {
         return edges;
     }
 
-    private static Pair<Vec3d, Vec3d> createXEdge(double x1, double x2, double y, double z){
-        return new Pair<>(new Vec3d(x1, y, z), new Vec3d(x2, y, z));
+    private static Pair<Vec3, Vec3> createXEdge(double x1, double x2, double y, double z){
+        return new Pair<>(new Vec3(x1, y, z), new Vec3(x2, y, z));
     }
-    private static Pair<Vec3d, Vec3d> createYEdge(double x, double y1, double y2, double z){
-        return new Pair<>(new Vec3d(x, y1, z), new Vec3d(x, y2, z));
+    private static Pair<Vec3, Vec3> createYEdge(double x, double y1, double y2, double z){
+        return new Pair<>(new Vec3(x, y1, z), new Vec3(x, y2, z));
     }
-    private static Pair<Vec3d, Vec3d> createZEdge(double x, double y, double z1, double z2){
-        return new Pair<>(new Vec3d(x, y, z1), new Vec3d(x, y, z2));
+    private static Pair<Vec3, Vec3> createZEdge(double x, double y, double z1, double z2){
+        return new Pair<>(new Vec3(x, y, z1), new Vec3(x, y, z2));
     }
 
     public void updateCenter(){
-        center = new Vec3d(
+        center = new Vec3(
                 min.x + xLength() / 2.0,
                 min.y + yLength() / 2.0,
                 min.z + zLength() / 2.0
         );
 
         double d = BoundingBoxSettings.renderSize();
-        renderBox = new Box(
+        renderBox = new AABB(
                 center.x - d,
                 center.y - d,
                 center.z - d,
@@ -115,7 +115,7 @@ public class EditorBoundingBox implements Referenced, PosScaled {
     }
 
     @Override
-    public Vec3d getPos() {
+    public Vec3 getPos() {
         return center;
     }
 
@@ -183,9 +183,9 @@ public class EditorBoundingBox implements Referenced, PosScaled {
 
     private static class StretchSelector extends ScreenSelector {
 
-        private Box box = new Box(0, 0, 0, 0, 0, 0);
+        private AABB box = new AABB(0, 0, 0, 0, 0, 0);
 
-        private void update(Vec3d vec1, Vec3d vec2){
+        private void update(Vec3 vec1, Vec3 vec2){
             double x1 = vec1.x;
             double y1 = vec1.y;
             double z1 = vec1.z;
@@ -203,11 +203,11 @@ public class EditorBoundingBox implements Referenced, PosScaled {
                 z1 += d; z2 -= d;
             }
 
-            box = new Box(x1 - d, y1 - d, z1 - d, x2 + d, y2 + d, z2 + d);
+            box = new AABB(x1 - d, y1 - d, z1 - d, x2 + d, y2 + d, z2 + d);
         }
 
         @Override
-        public Box getBox() {
+        public AABB getBox() {
             return box;
         }
     }
@@ -234,7 +234,7 @@ public class EditorBoundingBox implements Referenced, PosScaled {
         }
 
         @Override
-        public Box getBox() {
+        public AABB getBox() {
             return renderBox;
         }
     }

@@ -1,6 +1,6 @@
 package fish.crafting.fimfabric.tools;
 
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 
 public interface PosScaled extends Positioned{
 
@@ -10,7 +10,7 @@ public interface PosScaled extends Positioned{
 
     void setScale(double x, double y, double z);
 
-    default Vec3d scaleVec(){
-        return new Vec3d(scaleX(), scaleY(), scaleZ());
+    default Vec3 scaleVec(){
+        return new Vec3(scaleX(), scaleY(), scaleZ());
     }
 }

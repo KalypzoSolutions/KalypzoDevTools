@@ -1,6 +1,5 @@
 package fish.crafting.fimfabric.rendering.world;
 
-import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.client.FIMModClient;
 import fish.crafting.fimfabric.editor.EditorReference;
 import fish.crafting.fimfabric.editor.Referenced;
@@ -23,19 +22,15 @@ import fish.crafting.fimfabric.ui.custom.blockactions.UIBlockActions;
 import fish.crafting.fimfabric.util.CursorPicking;
 import fish.crafting.fimfabric.util.DebugSettings;
 import fish.crafting.fimfabric.util.VectorUtils;
-//#if MC>=260200
-//$$ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
-//$$ import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-//#else
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
-//#endif
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.fabricmc.fabric.api.event.Event;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.debug.DebugScreenEntries;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import static fish.crafting.fimfabric.util.DebugSettings.RENDER_SELECTOR_HITBOXES;
@@ -43,38 +38,27 @@ import static fish.crafting.fimfabric.util.DebugSettings.RENDER_SELECTOR_HITBOXE
 public class WorldRenderingManager {
 
     public static int RENDER_FRAME = 0;
-    private static final Identifier WORLD_DRAW = Identifier.of(FIMModClient.NAMESPACE, "world_draw");
+    private static final Identifier WORLD_DRAW = Identifier.fromNamespaceAndPath(FIMModClient.NAMESPACE, "world_draw");
     private static WorldRenderingManager instance;
     private boolean renderedCursorPickingLastFrame = false;
 
     private WorldRenderingManager(){
         instance = this;
-        //#if MC>=260200
-        //$$ //BEFORE_DEBUG_RENDER is gone; COLLECT_SUBMITS is the phase where custom geometry is handed
-        //$$ //to the SubmitNodeCollector, which is what ImplRenderContext3D needs.
-        //$$ LevelRenderEvents.COLLECT_SUBMITS.addPhaseOrdering(Event.DEFAULT_PHASE, WORLD_DRAW);
-        //$$ LevelRenderEvents.COLLECT_SUBMITS.register(WORLD_DRAW, get()::handleRenderEvent);
-        //#else
-        WorldRenderEvents.BEFORE_DEBUG_RENDER.addPhaseOrdering(Event.DEFAULT_PHASE, WORLD_DRAW);
-        WorldRenderEvents.BEFORE_DEBUG_RENDER.register(WORLD_DRAW, get()::handleRenderEvent);
-        //#endif
+        //COLLECT_SUBMITS is the phase where custom geometry is handed to the SubmitNodeCollector,
+        //which is what ImplRenderContext3D needs.
+        LevelRenderEvents.COLLECT_SUBMITS.addPhaseOrdering(Event.DEFAULT_PHASE, WORLD_DRAW);
+        LevelRenderEvents.COLLECT_SUBMITS.register(WORLD_DRAW, get()::handleRenderEvent);
     }
 
     public static WorldRenderingManager get(){
         return instance == null ? new WorldRenderingManager() : instance;
     }
 
-    //#if MC>=260200
-    //$$ private void handleRenderEvent(@NotNull LevelRenderContext worldCtx){
-    //#else
-    private void handleRenderEvent(@NotNull WorldRenderContext worldCtx){
-    //#endif
+    private void handleRenderEvent(@NotNull LevelRenderContext worldCtx){
         RENDER_FRAME++;
 
-        RenderContext3D context;
-        //It happens that all the versioned renderer impls have the same constructor
-        context = new ImplRenderContext3D(worldCtx);
-        
+        RenderContext3D context = new ImplRenderContext3D(worldCtx);
+
         context.beginRender();
         render(context);
         context.endRender();
@@ -96,7 +80,7 @@ public class WorldRenderingManager {
             }
         }
 
-        boolean isF3B = McCompat.isRenderingHitboxes() && DebugSettings.APPLY_MINECRAFT_DEBUG_TOOLS;
+        boolean isF3B = Minecraft.getInstance().debugEntries.isCurrentlyEnabled(DebugScreenEntries.ENTITY_HITBOXES) && DebugSettings.APPLY_MINECRAFT_DEBUG_TOOLS;
         if(RENDER_SELECTOR_HITBOXES || isF3B){
             WorldSelectorManager.get().renderSelectors(context);
         }
@@ -155,7 +139,7 @@ public class WorldRenderingManager {
 
         double d = BoundingBoxSettings.renderSize();
 
-        Vec3d pos = boundingBox.center;
+        Vec3 pos = boundingBox.center;
 
         float r = 1f;
         float g = 136f / 255f;
@@ -173,8 +157,8 @@ public class WorldRenderingManager {
                 1f, 1f, 1f, 0.3f);
 
         //actual bounding box
-        Vec3d min = boundingBox.min;
-        Vec3d max = boundingBox.max;
+        Vec3 min = boundingBox.min;
+        Vec3 max = boundingBox.max;
 
         context.renderFilledBox(
                 min.x, min.y, min.z,
@@ -189,8 +173,8 @@ public class WorldRenderingManager {
         );
 
         //render block outline
-        Vec3d minBlock = VectorUtils.toBlockPos(min);
-        Vec3d maxBlock = VectorUtils.toBlockPos(max);
+        Vec3 minBlock = VectorUtils.toBlockPos(min);
+        Vec3 maxBlock = VectorUtils.toBlockPos(max);
         context.setLineWidth(1f);
 
         context.renderBoxOutline(
@@ -213,7 +197,7 @@ public class WorldRenderingManager {
 
         double d = VectorSettings.renderSize();
 
-        Vec3d pos = location.vector;
+        Vec3 pos = location.vector;
 
         float r = 1f;
         float g = 0f;
@@ -234,7 +218,7 @@ public class WorldRenderingManager {
                 pos.x + d, pos.y + d, pos.z + d,
                 r, g, b, 1f);
 
-        Vec3d direction = location.getDirection();
+        Vec3 direction = location.getDirection();
         context.renderLine(
                 (float) pos.x,
                 (float) pos.y,
@@ -259,7 +243,7 @@ public class WorldRenderingManager {
 
         double d = VectorSettings.renderSize();
 
-        Vec3d pos = vector.vector;
+        Vec3 pos = vector.vector;
 
         float red = 0f;
 

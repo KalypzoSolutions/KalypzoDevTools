@@ -7,10 +7,10 @@ import fish.crafting.fimfabric.ui.actions.UIActionList;
 import fish.crafting.fimfabric.util.ActionUtils;
 import fish.crafting.fimfabric.util.ClickContext;
 import fish.crafting.fimfabric.util.VectorUtils;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 public class VectorActions extends UIActionList {
 
@@ -29,11 +29,11 @@ public class VectorActions extends UIActionList {
 
         @Override
         protected void activate(ClickContext context) {
-            MinecraftClient instance = MinecraftClient.getInstance();
-            ClientPlayerEntity player = instance.player;
+            Minecraft instance = Minecraft.getInstance();
+            LocalPlayer player = instance.player;
             if(player == null) return;
 
-            ActionUtils.copyIfClick(context, () -> VectorUtils.toString(player.getPos()));
+            ActionUtils.copyIfClick(context, () -> VectorUtils.toString(player.position()));
         }
     }
 
@@ -45,7 +45,7 @@ public class VectorActions extends UIActionList {
 
         @Override
         protected void activate(ClickContext context, BlockPos pos) {
-            ActionUtils.copyIfClick(context, () -> VectorUtils.toString(Vec3d.of(pos)));
+            ActionUtils.copyIfClick(context, () -> VectorUtils.toString(Vec3.atLowerCornerOf(pos)));
         }
     }
 }

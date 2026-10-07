@@ -11,12 +11,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-//26.2
-//
-// Mouse is MouseHandler and the button callback takes a MouseButtonInfo record instead of the raw
-// button/mods ints.
 @Mixin(MouseHandler.class)
-public class MouseMixin {
+public class MouseHandlerMixin {
 
     @Inject(method = "onMove", at = @At("HEAD"))
     public void cursorPos(long window, double x, double y, CallbackInfo ci){

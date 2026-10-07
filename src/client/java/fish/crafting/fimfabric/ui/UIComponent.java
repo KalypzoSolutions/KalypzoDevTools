@@ -7,7 +7,7 @@ import fish.crafting.fimfabric.util.NumUtil;
 import fish.crafting.fimfabric.util.WindowUtil;
 import lombok.Getter;
 import lombok.Setter;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

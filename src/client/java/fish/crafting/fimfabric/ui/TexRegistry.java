@@ -1,7 +1,7 @@
 package fish.crafting.fimfabric.ui;
 
 import fish.crafting.fimfabric.client.FIMModClient;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 public class TexRegistry {
@@ -25,7 +25,7 @@ public class TexRegistry {
 
 
     private static @NotNull Identifier widget(@NotNull String name){
-        return Identifier.of(FIMModClient.NAMESPACE, "widget/" + name);
+        return Identifier.fromNamespaceAndPath(FIMModClient.NAMESPACE, "widget/" + name);
     }
 
     private static @NotNull Identifier ui(@NotNull String name){

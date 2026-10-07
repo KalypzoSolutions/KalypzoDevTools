@@ -7,9 +7,9 @@ import fish.crafting.fimfabric.util.ClickContext;
 import fish.crafting.fimfabric.util.ColorUtil;
 import fish.crafting.fimfabric.util.SoundUtil;
 import fish.crafting.fimfabric.util.render.FadeTracker;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.util.Mth;
 
 public class UILanguageSwitcher extends UIBox {
 
@@ -23,14 +23,14 @@ public class UILanguageSwitcher extends UIBox {
 
     @Override
     protected void render(ScreenRenderContext context) {
-        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+        Font textRenderer = Minecraft.getInstance().font;
         String text = "Language: ";
 
         renderHover(context);
 
-        int y = renderY + renderHeight / 2 - textRenderer.fontHeight / 2;
+        int y = renderY + renderHeight / 2 - textRenderer.lineHeight / 2;
 
-        int alpha = MathHelper.lerp(fadeInTracker.alpha(255) / 255f, 0, 200);
+        int alpha = Mth.lerpInt(fadeInTracker.alpha(255) / 255f, 0, 200);
         int clrWhite = ColorUtil.alpha(0xFFFFFFFF, alpha);
 
         context.drawText(
@@ -42,7 +42,7 @@ public class UILanguageSwitcher extends UIBox {
                 true
         );
 
-        int width = textRenderer.getWidth(text);
+        int width = textRenderer.width(text);
         float whiteProgress = textWhiteFadeTracker.alpha() / 255f;
 
         if(ConnectionManager.kotlin){

@@ -1,22 +1,22 @@
 package fish.crafting.fimfabric.util;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.platform.InputConstants;
 
 public class KeyUtil {
     public static boolean isAltPressed(){
-        return isPressed(InputUtil.GLFW_KEY_LEFT_ALT);
+        return isPressed(InputConstants.KEY_LALT);
     }
     public static boolean isShiftPressed(){
-        return isPressed(InputUtil.GLFW_KEY_LEFT_SHIFT);
+        return isPressed(InputConstants.KEY_LSHIFT);
     }
     public static boolean isControlPressed(){
-        return isPressed(InputUtil.GLFW_KEY_LEFT_CONTROL);
+        return isPressed(InputConstants.KEY_LCONTROL);
     }
 
 
     public static boolean isPressed(int key){
-        return McCompat.isKeyPressed(key);
+        return InputConstants.isKeyDown(Minecraft.getInstance().getWindow(), key);
     }
 
 }

@@ -1,13 +1,13 @@
 package fish.crafting.fimfabric.keybind;
 
 import fish.crafting.fimfabric.tools.ToolManager;
-import net.minecraft.client.util.InputUtil;
+import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 
 public class ConfirmEditKeybind extends CustomKeybind{
 
     public ConfirmEditKeybind() {
-        super("confirm_edit", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_ENTER, KeybindCategory.IN_GAME_EDITOR);
+        super("confirm_edit", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_ENTER, KeybindCategory.IN_GAME_EDITOR);
     }
 
     @Override

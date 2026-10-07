@@ -15,14 +15,14 @@ import fish.crafting.fimfabric.tools.selector.WorldSelectorManager;
 import fish.crafting.fimfabric.ui.TexRegistry;
 import fish.crafting.fimfabric.util.*;
 import fish.crafting.fimfabric.util.render.FadeTracker;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.resources.Identifier;
 import fish.crafting.fimfabric.util.Pair;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ public class RotateTool extends CustomTool<PosRotated> {
 
     private ToolAxis editingAxis = null;
     private Pair<Float, Float> startRot = null;
-    private Vec3d startRotDir = null;
+    private Vec3 startRotDir = null;
     private PosRotated lastRendered = null;
 
     private final FadeTracker fadingText = new FadeTracker(0, 0.3, 0.1);
@@ -89,8 +89,8 @@ public class RotateTool extends CustomTool<PosRotated> {
     }
 
     @Override
-    public void render2D(ScreenRenderContext context, RenderTickCounter counter) {
-        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+    public void render2D(ScreenRenderContext context, DeltaTracker counter) {
+        Font textRenderer = Minecraft.getInstance().font;
 
         if(fadingText.isActive()) {
             int clr = fadingText.color(0xFFFFFFFF);
@@ -114,14 +114,14 @@ public class RotateTool extends CustomTool<PosRotated> {
             context.drawCenteredTextWithShadow(
                     "After: " + stringify(lastRendered.pitch(), lastRendered.yaw()),
                     WindowUtil.scaledWidth() / 2,
-                    (int) (40 + textRenderer.fontHeight * 1.5),
+                    (int) (40 + textRenderer.lineHeight * 1.5),
                     0xEE89C2FF
             );
 
             context.drawCenteredTextWithShadow(
                     "Press ENTER to confirm edit.",
                     WindowUtil.scaledWidth() / 2,
-                    (int) (40 + textRenderer.fontHeight * 3),
+                    (int) (40 + textRenderer.lineHeight * 3),
                     0xEE89FF93
             );
 
@@ -129,7 +129,7 @@ public class RotateTool extends CustomTool<PosRotated> {
                 context.drawCenteredTextWithShadow(
                         "Won't clear and return to IntelliJ",
                         WindowUtil.scaledWidth() / 2,
-                        (int) (40 + textRenderer.fontHeight * 4.5),
+                        (int) (40 + textRenderer.lineHeight * 4.5),
                         0xAAFF0000
                 );
             }
@@ -155,21 +155,21 @@ public class RotateTool extends CustomTool<PosRotated> {
             this.startRotDir = VectorUtils.getDirection(obj.pitch(), obj.yaw());
         }
 
-        Vec3d camera = context.camera();
+        Vec3 camera = context.camera();
 
-        ClientPlayerEntity player = MinecraftClient.getInstance().player;
+        LocalPlayer player = Minecraft.getInstance().player;
         if(player != null && editing){
-            Vec3d rot = player.getRotationVecClient();
+            Vec3 rot = player.getForward();
 
             if(editingAxis != null){
-                Vec3d vec3d = getPlaneIntersectionPoint(
+                Vec3 vec3d = getPlaneIntersectionPoint(
                         obj,
                         editingAxis,
                         camera,
                         rot);
 
                 if(vec3d != null && startRotDir != null){
-                    Vec3d dir = vec3d.subtract(obj.getPos()).normalize();
+                    Vec3 dir = vec3d.subtract(obj.getPos()).normalize();
 
                     if(editingAxis == ToolAxis.Y) {
                         obj.setRotation(obj.pitch(), VectorUtils.yawFromDirection(dir));
@@ -182,7 +182,7 @@ public class RotateTool extends CustomTool<PosRotated> {
                     }
                 }
             }else{
-                obj.setRotation(player.getPitch(), player.getYaw());
+                obj.setRotation(player.getXRot(), player.getYRot());
             }
         }
 
@@ -206,7 +206,7 @@ public class RotateTool extends CustomTool<PosRotated> {
             renderAxis(context, value, zoom, obj.getPos(), value.color(hoveredAxis), rotateDeg);
         }
 
-        Vec3d pos = obj.getPos();
+        Vec3 pos = obj.getPos();
         if(editing && startRotDir != null){
             context.setLineWidth(8f);
 
@@ -261,7 +261,7 @@ public class RotateTool extends CustomTool<PosRotated> {
     private void renderAxis(RenderContext3D context,
                             ToolAxis facing,
                             double zoom,
-                            Vec3d position,
+                            Vec3 position,
                             int color,
                             float rotateDeg){
         context.push();
@@ -275,7 +275,7 @@ public class RotateTool extends CustomTool<PosRotated> {
         int smallCircleAngles = 4;
         double smallRotate = Math.TAU / smallCircleAngles;
 
-        Vec3d unit = facing.unit;
+        Vec3 unit = facing.unit;
 
         double zoomedDistanceFromCenter = distanceFromCenter * zoom;
 
@@ -290,8 +290,8 @@ public class RotateTool extends CustomTool<PosRotated> {
             double bigSin2 = Math.sin(bigAng2);
             double bigCos2 = Math.cos(bigAng2);
 
-            Vec3d point  = facing.makePlaneFromNormal(bigSin1, bigCos1);
-            Vec3d point2 = facing.makePlaneFromNormal(bigSin2, bigCos2);
+            Vec3 point  = facing.makePlaneFromNormal(bigSin1, bigCos1);
+            Vec3 point2 = facing.makePlaneFromNormal(bigSin2, bigCos2);
 
             double zoomedLineWidth = lineWidth * zoom;
             double extrudingPartZoom = 4.0;
@@ -318,24 +318,24 @@ public class RotateTool extends CustomTool<PosRotated> {
 
                 if(i == bigCircleAngles - 2) zoom2 *= extrudingPartZoom / 2.0;
 
-                Vec3d pos1 = point
-                        .multiply(Math.sin(ang) * zoom1 + zoomedDistanceFromCenter)
-                        .add(unit.multiply(Math.cos(ang) * zoom1));
+                Vec3 pos1 = point
+                        .scale(Math.sin(ang) * zoom1 + zoomedDistanceFromCenter)
+                        .add(unit.scale(Math.cos(ang) * zoom1));
 
-                Vec3d pos2 = point
-                        .multiply(Math.sin(ang2) * zoom1 + zoomedDistanceFromCenter)
-                        .add(unit.multiply(Math.cos(ang2) * zoom1));
+                Vec3 pos2 = point
+                        .scale(Math.sin(ang2) * zoom1 + zoomedDistanceFromCenter)
+                        .add(unit.scale(Math.cos(ang2) * zoom1));
 
-                Vec3d pos3 = point2
-                        .multiply(Math.sin(ang) * zoom2 + zoomedDistanceFromCenter)
-                        .add(unit.multiply(Math.cos(ang) * zoom2));
+                Vec3 pos3 = point2
+                        .scale(Math.sin(ang) * zoom2 + zoomedDistanceFromCenter)
+                        .add(unit.scale(Math.cos(ang) * zoom2));
 
-                Vec3d pos4 = point2
-                        .multiply(Math.sin(ang2) * zoom2 + zoomedDistanceFromCenter)
-                        .add(unit.multiply(Math.cos(ang2) * zoom2));
+                Vec3 pos4 = point2
+                        .scale(Math.sin(ang2) * zoom2 + zoomedDistanceFromCenter)
+                        .add(unit.scale(Math.cos(ang2) * zoom2));
 
                 if(facing != ToolAxis.Y){
-                    Vec3d t = pos2;
+                    Vec3 t = pos2;
                     pos2 = pos3;
                     pos3 = t;
                 }
@@ -362,10 +362,10 @@ public class RotateTool extends CustomTool<PosRotated> {
         context.pop();
     }
 
-    private Vec3d getPlaneIntersectionPoint(Positioned positioned,
+    private Vec3 getPlaneIntersectionPoint(Positioned positioned,
                                                   ToolAxis planeFacing,
-                                                  Vec3d camera,
-                                                  Vec3d facing){
+                                                  Vec3 camera,
+                                                  Vec3 facing){
         return VectorUtils.lineIntersection(
                 positioned.getPos(),
                 planeFacing.unit,
@@ -441,7 +441,7 @@ public class RotateTool extends CustomTool<PosRotated> {
         }
 
         @Override
-        public Box getBox() {
+        public AABB getBox() {
             return boundingBox.toMCBox();
         }
     }

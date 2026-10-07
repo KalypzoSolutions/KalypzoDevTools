@@ -3,16 +3,16 @@ package fish.crafting.fimfabric.titleoffset;
 import fish.crafting.fimfabric.mixin.ScreenAccessor;
 import fish.crafting.fimfabric.rendering.InformationFeedManager;
 import fish.crafting.fimfabric.util.KeyUtil;
-import fish.crafting.fimfabric.util.McCompat;
 import fish.crafting.fimfabric.util.SoundUtil;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.Text;
+import net.fabricmc.fabric.api.client.screen.v1.Screens;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -36,13 +36,13 @@ public class TitleOffsetEditor {
     //Outlives the screen, so the values survive the server opening the same title again
     private @Nullable TitleOffsetModel model = null;
     private boolean open = false;
-    private final List<ClickableWidget> widgets = new ArrayList<>();
+    private final List<AbstractWidget> widgets = new ArrayList<>();
     private final List<OffsetSlider> sliders = new ArrayList<>();
 
     private TitleOffsetEditor(){
         instance = this;
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
-            if(screen instanceof HandledScreen<?>) onInit(screen);
+            if(screen instanceof AbstractContainerScreen<?>) onInit(screen);
         });
     }
 
@@ -79,18 +79,18 @@ public class TitleOffsetEditor {
     private void rebuild(){
         if(screen == null || model == null) return;
 
-        McCompat.screenWidgets(screen).removeAll(widgets);
+        Screens.getWidgets(screen).removeAll(widgets);
         widgets.clear();
         sliders.clear();
 
-        add(ButtonWidget.builder(Text.literal("Title offsets"), button -> toggle())
-                .dimensions(MARGIN, MARGIN, 80, ROW_HEIGHT).build());
+        add(Button.builder(Component.literal("Title offsets"), button -> toggle())
+                .bounds(MARGIN, MARGIN, 80, ROW_HEIGHT).build());
         if(!open) return;
 
-        add(ButtonWidget.builder(Text.literal("Copy"), button -> copy())
-                .dimensions(MARGIN + 82, MARGIN, 40, ROW_HEIGHT).build());
-        add(ButtonWidget.builder(Text.literal("Reset"), button -> reset())
-                .dimensions(MARGIN + 124, MARGIN, 40, ROW_HEIGHT).build());
+        add(Button.builder(Component.literal("Copy"), button -> copy())
+                .bounds(MARGIN + 82, MARGIN, 40, ROW_HEIGHT).build());
+        add(Button.builder(Component.literal("Reset"), button -> reset())
+                .bounds(MARGIN + 124, MARGIN, 40, ROW_HEIGHT).build());
 
         int width = Math.clamp((screen.width - CONTAINER_WIDTH) / 2 - MARGIN * 2, 80, 168);
         int top = MARGIN + ROW_PITCH;
@@ -108,9 +108,9 @@ public class TitleOffsetEditor {
         }
     }
 
-    private void add(ClickableWidget widget){
+    private void add(AbstractWidget widget){
         widgets.add(widget);
-        McCompat.screenWidgets(screen).add(widget);
+        Screens.getWidgets(screen).add(widget);
     }
 
     private void applyTitle(){
@@ -143,7 +143,7 @@ public class TitleOffsetEditor {
     private void copy(){
         if(model == null) return;
 
-        MinecraftClient.getInstance().keyboard.setClipboard(model.export());
+        Minecraft.getInstance().keyboardHandler.setClipboard(model.export());
         InformationFeedManager.success("Copied!", false);
         SoundUtil.clickSound();
     }

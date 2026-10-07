@@ -1,18 +1,18 @@
 package fish.crafting.fimfabric.util;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
 
 public class SoundUtil {
 
     public static void play(SoundEvent event){
-        MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(event, 1.0f));
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(event, 1.0f));
     }
 
     public static void play(SoundEvent event, float pitch){
-        MinecraftClient.getInstance().getSoundManager().play(PositionedSoundInstance.master(event, pitch));
+        Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(event, pitch));
     }
 
     public static void clickSound() {

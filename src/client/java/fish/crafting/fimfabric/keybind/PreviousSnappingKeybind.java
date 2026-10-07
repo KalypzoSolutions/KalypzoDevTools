@@ -3,13 +3,13 @@ package fish.crafting.fimfabric.keybind;
 import fish.crafting.fimfabric.tools.EditorTools;
 import fish.crafting.fimfabric.tools.MoveTool;
 import fish.crafting.fimfabric.tools.ToolManager;
-import net.minecraft.client.util.InputUtil;
+import com.mojang.blaze3d.platform.InputConstants;
 import org.lwjgl.glfw.GLFW;
 
 public class PreviousSnappingKeybind extends CustomKeybind{
 
     public PreviousSnappingKeybind() {
-        super("snapping_previous", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_KP_SUBTRACT, KeybindCategory.IN_GAME_EDITOR);
+        super("snapping_previous", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_KP_SUBTRACT, KeybindCategory.IN_GAME_EDITOR);
     }
 
     @Override

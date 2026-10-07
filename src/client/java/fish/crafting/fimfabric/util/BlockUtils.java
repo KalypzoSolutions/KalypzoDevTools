@@ -1,14 +1,14 @@
 package fish.crafting.fimfabric.util;
 
 import fish.crafting.fimfabric.util.cache.RenderFrameCache;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.Camera;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.ClipContext;
 
 public class BlockUtils {
 
@@ -21,25 +21,25 @@ public class BlockUtils {
     }
 
     private static BlockPos getPlayerTargetPos(){
-        MinecraftClient client = MinecraftClient.getInstance();
-        ClientWorld world = client.world;
+        Minecraft client = Minecraft.getInstance();
+        ClientLevel world = client.level;
         if(world == null) return null;
 
-        ShapeContext context = (client.player == null ? ShapeContext.absent() : ShapeContext.of(client.player));
+        CollisionContext context = (client.player == null ? CollisionContext.empty() : CollisionContext.of(client.player));
 
-        Camera camera = client.gameRenderer.getCamera();
-        Vec3d pos = camera.getPos();
-        Vec3d rot = McCompat.cameraRotation();
-        Vec3d pos2 = pos.add(rot.multiply(MAX_RAY_DISTANCE));
+        Camera camera = client.gameRenderer.mainCamera();
+        Vec3 pos = camera.position();
+        Vec3 rot = client.getCameraEntity().getForward();
+        Vec3 pos2 = pos.add(rot.scale(MAX_RAY_DISTANCE));
 
-        var fluidHandling = RaycastContext.FluidHandling.NONE;
-        var shapeType = RaycastContext.ShapeType.COLLIDER;
+        var fluidHandling = ClipContext.Fluid.NONE;
+        var shapeType = ClipContext.Block.COLLIDER;
         if(KeyUtil.isShiftPressed()) {
-            fluidHandling = RaycastContext.FluidHandling.ANY;
-            shapeType = RaycastContext.ShapeType.OUTLINE;
+            fluidHandling = ClipContext.Fluid.ANY;
+            shapeType = ClipContext.Block.OUTLINE;
         }
 
-        BlockHitResult raycast = world.raycast(new RaycastContext(pos, pos2, shapeType, fluidHandling, context));
+        BlockHitResult raycast = world.clip(new ClipContext(pos, pos2, shapeType, fluidHandling, context));
         return raycast.getBlockPos();
     }
 

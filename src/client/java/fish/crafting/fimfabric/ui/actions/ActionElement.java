@@ -15,8 +15,8 @@ import fish.crafting.fimfabric.util.NanoUtils;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,14 +48,13 @@ public abstract class ActionElement extends UIBox {
         UIActionList listParent = getListParent();
         if(listParent == null) return;
 
-        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+        Font textRenderer = Minecraft.getInstance().font;
 
         context.fill(renderX, renderY, renderX + renderWidth - 1, renderY + renderHeight, 0x99000000);
 
         if(separator){
             context.nextLayer();
             context.drawHorizontalLine(renderX, renderX + renderWidth, renderY - 1, 0x22FFFFFF);
-            context.previousLayer();
         }
 
         if(this.active){
@@ -87,7 +86,7 @@ public abstract class ActionElement extends UIBox {
         }
 
         int clr = active ? 0xFFFFFFFF : 0x99FFFFFF;
-        int y = centerRenderedY() - textRenderer.fontHeight / 2;
+        int y = centerRenderedY() - textRenderer.lineHeight / 2;
 
         if(this instanceof ExpandActionElement) {
             context.drawText(

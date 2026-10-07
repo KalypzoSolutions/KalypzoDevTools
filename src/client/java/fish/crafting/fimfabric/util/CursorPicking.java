@@ -2,14 +2,14 @@ package fish.crafting.fimfabric.util;
 
 import fish.crafting.fimfabric.rendering.custom.RenderContext3D;
 import fish.crafting.fimfabric.util.cache.RenderFrameCache;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.render.Camera;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.RaycastContext;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.Camera;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.ClipContext;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 
@@ -17,15 +17,15 @@ public class CursorPicking {
 
     private static final RenderFrameCache<BlockHitResult> cachedRaycast = new RenderFrameCache<>(null);
 
-    private static Vec3d vec1 = new Vec3d(0, 300, 0);
+    private static Vec3 vec1 = new Vec3(0, 300, 0);
     private static double x = 0, y = -1, z = 0;
     public static Matrix4f projectionMatrix = new Matrix4f(), viewMatrix = new Matrix4f(), positionMatrix = new Matrix4f();
 
     public static void update(){
-        MinecraftClient client = MinecraftClient.getInstance();
-        if(client.world == null) return;
+        Minecraft client = Minecraft.getInstance();
+        if(client.level == null) return;
 
-        Camera camera = client.gameRenderer.getCamera();
+        Camera camera = client.gameRenderer.mainCamera();
 
         //System.out.println(viewMatrix);
 
@@ -34,7 +34,7 @@ public class CursorPicking {
         y = -converted[1];
         z = -converted[2];
 
-        vec1 = camera.getPos();
+        vec1 = camera.position();
     }
 
     public static void renderPickedPos(@NotNull RenderContext3D context,
@@ -79,13 +79,13 @@ public class CursorPicking {
     }
 
     public static boolean areBlockPickingPrerequisitesMet(){
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         if(client.player == null) return false;
         if(client.player.isSleeping()) return false;
 
         return KeyUtil.isControlPressed() &&
-                !client.mouse.isCursorLocked() &&
-                McCompat.currentScreen() instanceof ChatScreen;
+                !client.mouseHandler.isMouseGrabbed() &&
+                client.gui.screen() instanceof ChatScreen;
     }
 
     public static BlockHitResult raycast(){
@@ -94,27 +94,27 @@ public class CursorPicking {
 
     public static BlockHitResult raycast(boolean allowAllBlocks, double dist) {
         return cachedRaycast.computeIfAbsent(() -> {
-            MinecraftClient client = MinecraftClient.getInstance();
-            if(client.world == null) return null;
+            Minecraft client = Minecraft.getInstance();
+            if(client.level == null) return null;
 
-            ShapeContext context = (client.player == null ? ShapeContext.absent() : ShapeContext.of(client.player));
+            CollisionContext context = (client.player == null ? CollisionContext.empty() : CollisionContext.of(client.player));
 
-            Vec3d vec2 = createEndPoint(dist);
+            Vec3 vec2 = createEndPoint(dist);
 
-            var fluidHandling = RaycastContext.FluidHandling.NONE;
-            var shapeType = RaycastContext.ShapeType.COLLIDER;
+            var fluidHandling = ClipContext.Fluid.NONE;
+            var shapeType = ClipContext.Block.COLLIDER;
 
             if(allowAllBlocks) {
-                fluidHandling = RaycastContext.FluidHandling.ANY;
-                shapeType = RaycastContext.ShapeType.OUTLINE;
+                fluidHandling = ClipContext.Fluid.ANY;
+                shapeType = ClipContext.Block.OUTLINE;
             }
 
 
-            return client.world.raycast(new RaycastContext(vec1, vec2, shapeType, fluidHandling, context));
+            return client.level.clip(new ClipContext(vec1, vec2, shapeType, fluidHandling, context));
         });
     }
 
-    public static Vec3d createEndPoint(double dist){
+    public static Vec3 createEndPoint(double dist){
         return vec1.add(x * dist, y * dist, z * dist);
     }
 

@@ -15,13 +15,13 @@ import fish.crafting.fimfabric.tools.selector.WorldSelectorManager;
 import fish.crafting.fimfabric.ui.TexRegistry;
 import fish.crafting.fimfabric.util.*;
 import fish.crafting.fimfabric.util.render.FadeTracker;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -51,11 +51,11 @@ public class ScaleTool extends CustomTool<PosScaled> {
     private double scaleMultiplier = 2d;
     //Offset from the center of the vector, used so that axis-selecting won't snap
     private Double editingCoordOffset = null;
-    private Vec3d referenceScale = null;
+    private Vec3 referenceScale = null;
     private ToolAxis editingAxis = null;
     private final FadeTracker fadingText = new FadeTracker(0, 0.3, 0.1);
     private static final FadeTracker snapTextFade = new FadeTracker(0, 0.1, 0.3);
-    private Vec3d startScale = null;
+    private Vec3 startScale = null;
     private PosScaled lastRendered = null;
 
     public ScaleTool(){
@@ -78,7 +78,7 @@ public class ScaleTool extends CustomTool<PosScaled> {
         editingAxis = null;
     }
 
-    private void startEditingPosDirectly(@NotNull Positioned positioned, Vec3d camera){
+    private void startEditingPosDirectly(@NotNull Positioned positioned, Vec3 camera){
         editingPos = true;
         editingAxis = null;
         referenceScale = null;
@@ -96,7 +96,7 @@ public class ScaleTool extends CustomTool<PosScaled> {
 
     public void vectorClickCallback(Positioned positioned, boolean click){
         if(click) {
-            Vec3d camera = MinecraftClient.getInstance().gameRenderer.getCamera().getPos();
+            Vec3 camera = Minecraft.getInstance().gameRenderer.mainCamera().position();
             startEditingPosDirectly(positioned, camera);
         }else{
             stopEditing();
@@ -104,8 +104,8 @@ public class ScaleTool extends CustomTool<PosScaled> {
     }
 
     @Override
-    public void render2D(ScreenRenderContext context, RenderTickCounter counter) {
-        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+    public void render2D(ScreenRenderContext context, DeltaTracker counter) {
+        Font textRenderer = Minecraft.getInstance().font;
 
         int windowWidth = WindowUtil.scaledWidth();
         int snappingWidth = 90;
@@ -181,14 +181,14 @@ public class ScaleTool extends CustomTool<PosScaled> {
             context.drawCenteredTextWithShadow(
                     "After: " + stringify(lastRendered.scaleX(), lastRendered.scaleY(), lastRendered.scaleZ()),
                     WindowUtil.scaledWidth() / 2,
-                    (int) (40 + textRenderer.fontHeight * 1.5),
+                    (int) (40 + textRenderer.lineHeight * 1.5),
                     0xEE89C2FF
             );
 
             context.drawCenteredTextWithShadow(
                     "Press ENTER to confirm edit.",
                     WindowUtil.scaledWidth() / 2,
-                    (int) (40 + textRenderer.fontHeight * 3),
+                    (int) (40 + textRenderer.lineHeight * 3),
                     0xEE89FF93
             );
 
@@ -196,14 +196,14 @@ public class ScaleTool extends CustomTool<PosScaled> {
                 context.drawCenteredTextWithShadow(
                         "Won't clear and return to IntelliJ",
                         WindowUtil.scaledWidth() / 2,
-                        (int) (40 + textRenderer.fontHeight * 4.5),
+                        (int) (40 + textRenderer.lineHeight * 4.5),
                         0xAAFF0000
                 );
             }
         }
     }
 
-    private String stringify(Vec3d pos){
+    private String stringify(Vec3 pos){
         return stringify(pos.x, pos.y, pos.z);
     }
 
@@ -215,7 +215,7 @@ public class ScaleTool extends CustomTool<PosScaled> {
     protected void render(RenderContext3D context, PosScaled obj) {
         this.lastRendered = obj;
         if(this.startScale == null) {
-            this.startScale = new Vec3d(
+            this.startScale = new Vec3(
                     obj.scaleX(),
                     obj.scaleY(),
                     obj.scaleZ()
@@ -226,10 +226,10 @@ public class ScaleTool extends CustomTool<PosScaled> {
         context.translateCamera();
 
         if(this.editingPos) {
-            Vec3d pos = obj.getPos();
-            int x = MathHelper.floor(pos.x);
-            int y = MathHelper.floor(pos.y);
-            int z = MathHelper.floor(pos.z);
+            Vec3 pos = obj.getPos();
+            int x = Mth.floor(pos.x);
+            int y = Mth.floor(pos.y);
+            int z = Mth.floor(pos.z);
 
             context.renderFilledBox(
                     x, y, z,
@@ -246,10 +246,10 @@ public class ScaleTool extends CustomTool<PosScaled> {
 
         context.pop();
 
-        Vec3d camera = context.camera();
+        Vec3 camera = context.camera();
 
-        if(MinecraftClient.getInstance().player != null && editingPos){
-            Vec3d rot = MinecraftClient.getInstance().player.getRotationVec(context.tickDelta());
+        if(Minecraft.getInstance().player != null && editingPos){
+            Vec3 rot = Minecraft.getInstance().player.getViewVector(context.tickDelta());
 
             if(this.referenceScale == null){
                 this.referenceScale = obj.scaleVec();
@@ -322,11 +322,11 @@ public class ScaleTool extends CustomTool<PosScaled> {
         }
 
         for (ToolAxis value : ToolAxis.values()) {
-            Vec3d u = value.unit.multiply(zoom * (handlePartLength + headPartLength));
+            Vec3 u = value.unit.scale(zoom * (handlePartLength + headPartLength));
 
-            Vec3d origin1 = obj.getPos().add(value.unit.multiply((offsetFromCenter - handlePartLength) * zoom));
-            Vec3d origin2 = obj.getPos().add(value.unit.multiply((offsetFromCenter - handlePartLength) * -zoom));
-            Vec3d a = value.oppositeUnit.multiply(headPartWidth * 0.8 * zoom);
+            Vec3 origin1 = obj.getPos().add(value.unit.scale((offsetFromCenter - handlePartLength) * zoom));
+            Vec3 origin2 = obj.getPos().add(value.unit.scale((offsetFromCenter - handlePartLength) * -zoom));
+            Vec3 a = value.oppositeUnit.scale(headPartWidth * 0.8 * zoom);
 
             BoundingBox box = axisBoundingBoxes[value.ordinal()];
             box.change(
@@ -354,7 +354,7 @@ public class ScaleTool extends CustomTool<PosScaled> {
                               ToolAxis facing,
                               int multiplier,
                               double zoom,
-                              Vec3d position,
+                              Vec3 position,
                               int color){
         context.push();
         context.translateCamera();
@@ -363,7 +363,7 @@ public class ScaleTool extends CustomTool<PosScaled> {
 
         int angles = 9;
         double rotate = Math.TAU / (angles);
-        Vec3d unit = facing.unit;
+        Vec3 unit = facing.unit;
 
         double x = unit.x * handlePartWidth * zoom;
         double y = unit.y * handlePartWidth * zoom;
@@ -411,12 +411,12 @@ public class ScaleTool extends CustomTool<PosScaled> {
                             ToolAxis facing,
                             int multiplier,
                             double zoom,
-                            Vec3d position,
+                            Vec3 position,
                             int color){
         context.push();
         context.translateCamera();
 
-        Vec3d unit = facing.unit;
+        Vec3 unit = facing.unit;
 
         double x = position.x + unit.x * offsetFromCenter * zoom * multiplier;
         double y = position.y + unit.y * offsetFromCenter * zoom * multiplier;
@@ -451,9 +451,9 @@ public class ScaleTool extends CustomTool<PosScaled> {
      */
     private Double getPlaneIntersectionCoordinate(Positioned positioned,
                                                   ToolAxis planeFacing,
-                                                  Vec3d camera,
-                                                  Vec3d facing){
-        Vec3d vec3d = VectorUtils.lineIntersection(
+                                                  Vec3 camera,
+                                                  Vec3 facing){
+        Vec3 vec3d = VectorUtils.lineIntersection(
                 positioned.getPos(),
                 facing.multiply(planeFacing.oppositeUnit).normalize(),
                 camera,
@@ -546,7 +546,7 @@ public class ScaleTool extends CustomTool<PosScaled> {
         }
 
         @Override
-        public Box getBox() {
+        public AABB getBox() {
             return boundingBox.toMCBox();
         }
     }

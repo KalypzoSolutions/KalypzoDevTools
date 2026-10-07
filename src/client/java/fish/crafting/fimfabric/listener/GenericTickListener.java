@@ -6,14 +6,14 @@ import fish.crafting.fimfabric.tools.Positioned;
 import fish.crafting.fimfabric.tools.ToolManager;
 import fish.crafting.fimfabric.tools.selector.WorldSelectorManager;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 public class GenericTickListener implements ClientTickEvents.EndTick {
 
     private int totalTicks = 0;
 
     @Override
-    public void onEndTick(MinecraftClient client) {
+    public void onEndTick(Minecraft client) {
         totalTicks++;
         WorldSelectorManager.get().updateSelectors();
         ConnectionManager.get().tick();

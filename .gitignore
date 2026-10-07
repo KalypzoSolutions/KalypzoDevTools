@@ -3,8 +3,6 @@
 /build/
 /run/
 /jars/
-versions/*/.gradle/
-versions/*/build/
 
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/

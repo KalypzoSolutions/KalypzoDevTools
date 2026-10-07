@@ -2,8 +2,8 @@ package fish.crafting.fimfabric.tools.selector;
 
 import fish.crafting.fimfabric.rendering.world.WorldRenderingManager;
 import lombok.Getter;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import static fish.crafting.fimfabric.tools.selector.WorldSelectorManager.LAST_RENDER_FRAME;
@@ -16,10 +16,10 @@ public abstract class WorldSelector {
     private boolean hovered = false;
     public int lastRenderFrame = -1;
 
-    public abstract Box getBox();
+    public abstract AABB getBox();
 
-    public @Nullable Vec3d raycast(Vec3d from, Vec3d to){
-        return getBox().raycast(from, to).orElse(null);
+    public @Nullable Vec3 raycast(Vec3 from, Vec3 to){
+        return getBox().clip(from, to).orElse(null);
     }
 
     public final void handleStatus(boolean enabled){

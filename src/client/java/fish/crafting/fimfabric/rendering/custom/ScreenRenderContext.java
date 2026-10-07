@@ -1,48 +1,33 @@
 package fish.crafting.fimfabric.rendering.custom;
 
 import fish.crafting.fimfabric.util.ColorUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-//#if MC>=12106
-import net.minecraft.client.gl.RenderPipelines;
-//#endif
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 public class ScreenRenderContext {
 
     @NotNull
-    private final DrawContext context;
+    private final GuiGraphicsExtractor context;
 
-    public ScreenRenderContext(@NotNull DrawContext context){
+    public ScreenRenderContext(@NotNull GuiGraphicsExtractor context){
         this.context = context;
     }
 
     public void push(){
-        //#if MC<12106
-        //$$ context.getMatrices().push();
-        //#else
-        context.getMatrices().pushMatrix();
-        //#endif
+        context.pose().pushMatrix();
     }
 
     public void pop(){
-        //#if MC<12106
-        //$$ context.getMatrices().pop();
-        //#else
-        context.getMatrices().popMatrix();
-        //#endif
+        context.pose().popMatrix();
     }
 
     public void drawGuiTexture(@NotNull Identifier identifier, int x, int y, int width, int height, int color){
-        context.drawGuiTexture(
-                //#if MC<12106
-                //$$ RenderLayer::getGuiTextured,
-                //#else
+        context.blitSprite(
                 RenderPipelines.GUI_TEXTURED,
-                //#endif
                 identifier,
                 x, y,
                 width, height,
@@ -51,30 +36,15 @@ public class ScreenRenderContext {
     }
 
     public void translate(double x, double y){
-        translate(x, y, 0);
-    }
-
-    public void translate(double x, double y, double z){
-        //#if MC<12106
-        //$$ context.getMatrices().translate(x, y, z);
-        //#else
-        context.getMatrices().translate((float) x, (float) y);
-        //#endif
-    }
-
-    //This method used to be needed before 1.21.6, to finalize draws
-    public void draw(){
-        //#if MC<12106
-        //$$ context.draw();
-        //#endif
+        context.pose().translate((float) x, (float) y);
     }
 
     public void drawText(String text, int x, int y, int color, boolean shadow){
         drawText(textRenderer(), text, x, y, color, shadow);
     }
 
-    public void drawText(TextRenderer renderer, String text, int x, int y, int color, boolean shadow){
-        context.drawText(
+    public void drawText(Font renderer, String text, int x, int y, int color, boolean shadow){
+        context.text(
                 renderer,
                 text,
                 x,
@@ -85,7 +55,7 @@ public class ScreenRenderContext {
     }
 
     public void drawCenteredTextWithShadow(String text, int centerX, int y, int color){
-        context.drawCenteredTextWithShadow(
+        context.centeredText(
                 textRenderer(),
                 text,
                 centerX,
@@ -94,24 +64,9 @@ public class ScreenRenderContext {
         );
     }
 
+    //Layers only go up; elements drawn later end up on top anyway.
     public void nextLayer(){
-        //#if MC>=260200
-        //$$ context.guiRenderState.up();
-        //#elseif MC>=12106
-        context.state.goUpLayer();
-        //#else
-        //$$ translate(0, 0, 1);
-        //#endif
-    }
-
-    public void previousLayer(){
-        //#if MC>=260200
-        //$$ //26.2 only knows how to go up a layer; later elements draw on top anyway.
-        //#elseif MC>=12106
-        context.state.goDownLayer();
-        //#else
-        //$$ translate(0, 0, -1);
-        //#endif
+        context.guiRenderState.up();
     }
 
     public void fill(int x1, int y1, int x2, int y2, int color){
@@ -182,40 +137,28 @@ public class ScreenRenderContext {
         }
     }
 
-    //26.2 dropped the line/border helpers, so they are filled by hand there.
+    //GuiGraphicsExtractor has no line/border helpers, so they are filled by hand.
     public void drawVerticalLine(int x, int y1, int y2, int color){
-        //#if MC>=260200
-        //$$ context.fill(x, Math.min(y1, y2) + 1, x + 1, Math.max(y1, y2), color);
-        //#else
-        context.drawVerticalLine(x, y1, y2, color);
-        //#endif
+        context.fill(x, Math.min(y1, y2) + 1, x + 1, Math.max(y1, y2), color);
     }
 
     public void drawHorizontalLine(int x1, int x2, int y, int color){
-        //#if MC>=260200
-        //$$ context.fill(Math.min(x1, x2), y, Math.max(x1, x2) + 1, y + 1, color);
-        //#else
-        context.drawHorizontalLine(x1, x2, y, color);
-        //#endif
+        context.fill(Math.min(x1, x2), y, Math.max(x1, x2) + 1, y + 1, color);
     }
 
     public void drawBorder(int x, int y, int width, int height, int color){
-        //#if MC>=260200
-        //$$ context.fill(x, y, x + width, y + 1, color);
-        //$$ context.fill(x, y + height - 1, x + width, y + height, color);
-        //$$ context.fill(x, y + 1, x + 1, y + height - 1, color);
-        //$$ context.fill(x + width - 1, y + 1, x + width, y + height - 1, color);
-        //#else
-        context.drawBorder(x, y, width, height, color);
-        //#endif
+        context.fill(x, y, x + width, y + 1, color);
+        context.fill(x, y + height - 1, x + width, y + height, color);
+        context.fill(x, y + 1, x + 1, y + height - 1, color);
+        context.fill(x + width - 1, y + 1, x + width, y + height - 1, color);
     }
 
     public int fontHeight() {
-        return textRenderer().fontHeight;
+        return textRenderer().lineHeight;
     }
 
-    private static TextRenderer textRenderer(){
-        return MinecraftClient.getInstance().textRenderer;
+    private static Font textRenderer(){
+        return Minecraft.getInstance().font;
     }
 
 }

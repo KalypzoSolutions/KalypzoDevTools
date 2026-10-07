@@ -10,11 +10,11 @@ import fish.crafting.fimfabric.ui.actions.ActionElement;
 import fish.crafting.fimfabric.ui.actions.BlockPosActionElement;
 import fish.crafting.fimfabric.ui.actions.UIActionList;
 import fish.crafting.fimfabric.util.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.phys.Vec3;
 
 public class ToolActions extends UIActionList {
 
@@ -38,14 +38,14 @@ public class ToolActions extends UIActionList {
 
         @Override
         protected void activate(ClickContext context) {
-            MinecraftClient instance = MinecraftClient.getInstance();
-            ClientPlayerEntity player = instance.player;
+            Minecraft instance = Minecraft.getInstance();
+            LocalPlayer player = instance.player;
             if(player == null) return;
 
             Positioned editing = ToolManager.get().getEditing();
             if(editing == null) return;
 
-            Vec3d pos = editing.getPos();
+            Vec3 pos = editing.getPos();
             PlayerUtil.teleportTo(pos.x, pos.y, pos.z);
 
             SoundUtil.clickSound();
@@ -60,8 +60,8 @@ public class ToolActions extends UIActionList {
 
         @Override
         protected void activate(ClickContext context) {
-            MinecraftClient instance = MinecraftClient.getInstance();
-            ClientPlayerEntity player = instance.player;
+            Minecraft instance = Minecraft.getInstance();
+            LocalPlayer player = instance.player;
             if(player == null) return;
 
             Positioned editing = ToolManager.get().getEditing();
@@ -84,14 +84,14 @@ public class ToolActions extends UIActionList {
 
         @Override
         protected void activate(ClickContext context) {
-            MinecraftClient instance = MinecraftClient.getInstance();
-            ClientPlayerEntity player = instance.player;
+            Minecraft instance = Minecraft.getInstance();
+            LocalPlayer player = instance.player;
             if(player == null) return;
 
             Positioned editing = ToolManager.get().getEditing();
             if(editing == null) return;
 
-            Vec3d blockPos = VectorUtils.toBlockPos(editing.getPos());
+            Vec3 blockPos = VectorUtils.toBlockPos(editing.getPos());
 
             editing.setPos(
                     blockPos.x + 0.5,
@@ -111,8 +111,8 @@ public class ToolActions extends UIActionList {
 
         @Override
         protected void activate(ClickContext context) {
-            MinecraftClient instance = MinecraftClient.getInstance();
-            ClientPlayerEntity player = instance.player;
+            Minecraft instance = Minecraft.getInstance();
+            LocalPlayer player = instance.player;
             if(player == null) return;
 
             Positioned editing = ToolManager.get().getEditing();
@@ -124,8 +124,8 @@ public class ToolActions extends UIActionList {
                     player.getZ());
 
             posRotated.setRotation(
-                    player.getPitch(),
-                    player.getYaw()
+                    player.getXRot(),
+                    player.getYRot()
             );
 
             SoundUtil.clickSound();
@@ -141,8 +141,8 @@ public class ToolActions extends UIActionList {
 
         @Override
         protected void activate(ClickContext context) {
-            MinecraftClient instance = MinecraftClient.getInstance();
-            ClientPlayerEntity player = instance.player;
+            Minecraft instance = Minecraft.getInstance();
+            LocalPlayer player = instance.player;
             if(player == null) return;
 
             Positioned editing = ToolManager.get().getEditing();

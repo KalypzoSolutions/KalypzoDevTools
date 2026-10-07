@@ -5,12 +5,12 @@ import fish.crafting.fimfabric.ui.TexRegistry;
 import fish.crafting.fimfabric.util.ColorUtil;
 import fish.crafting.fimfabric.util.NumUtil;
 import fish.crafting.fimfabric.util.SoundUtil;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -47,8 +47,8 @@ public class InformationFeedManager {
         int x = 20;
         int y = 10;
 
-        TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-        int addY = (int) (textRenderer.fontHeight * 1.5);
+        Font textRenderer = Minecraft.getInstance().font;
+        int addY = (int) (textRenderer.lineHeight * 1.5);
 
         while(iterator.hasNext()) {
             FeedLine next = iterator.next();
@@ -78,13 +78,12 @@ public class InformationFeedManager {
             y += addY;
         }
 
-        context.draw();
         context.pop();
     }
 
     public static FeedLine success(String text, boolean sound){
         var line = new Success(text);
-        if(sound) line.sound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 1f);
+        if(sound) line.sound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1f);
         get().add(line);
 
         return line;
@@ -92,7 +91,7 @@ public class InformationFeedManager {
 
     public static FeedLine error(String text, boolean sound){
         var line = new Error(text);
-        if(sound) line.sound(SoundEvents.ENTITY_IRON_GOLEM_REPAIR, 1f);
+        if(sound) line.sound(SoundEvents.IRON_GOLEM_REPAIR, 1f);
         get().add(line);
 
         return line;
@@ -100,7 +99,7 @@ public class InformationFeedManager {
 
     public static FeedLine warn(String text, boolean sound){
         var line = new Warn(text);
-        if(sound) line.sound(SoundEvents.ENTITY_ELDER_GUARDIAN_CURSE, 2f);
+        if(sound) line.sound(SoundEvents.ELDER_GUARDIAN_CURSE, 2f);
         get().add(line);
 
         return line;
@@ -162,8 +161,8 @@ public class InformationFeedManager {
         protected void render0(ScreenRenderContext context, int x, int y, int alpha) {
             int clr = ColorUtil.alpha(color, alpha);
 
-            TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-            int size = textRenderer.fontHeight;
+            Font textRenderer = Minecraft.getInstance().font;
+            int size = textRenderer.lineHeight;
 
             context.drawGuiTexture(
                     icon,
