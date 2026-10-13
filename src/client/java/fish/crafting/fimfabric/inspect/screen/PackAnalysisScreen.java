@@ -17,6 +17,7 @@ import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.*;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FontDescription;
@@ -176,8 +177,7 @@ public class PackAnalysisScreen extends BaseOwoScreen<FlowLayout> {
             }
         }
 
-        LabelComponent preview = preview(font, providers);
-        if(preview != null) container.child(preview);
+        preview(container, font, providers);
 
         for (FontProvider provider : providers) {
             container.child(label(describe(provider)).color(MUTED));
@@ -189,9 +189,13 @@ public class PackAnalysisScreen extends BaseOwoScreen<FlowLayout> {
     /**
      * The glyphs of the bitmap providers, drawn in the font itself.
      */
-    private @Nullable LabelComponent preview(FontInfo font, List<FontProvider> providers){
+    private void preview(CollapsibleContainer container, FontInfo font, List<FontProvider> providers){
+        Font renderer = Minecraft.getInstance().font;
+        Style style = Style.EMPTY.withFont(new FontDescription.Resource(font.id()));
         StringBuilder glyphs = new StringBuilder();
         int count = 0;
+        //Packs stretch a single pixel over the whole screen to fade it, drawn here it would bury the list
+        int tooWide = 0;
         //How far a glyph reaches above and below the line it is drawn in
         int above = 0;
         int below = 0;
@@ -200,29 +204,36 @@ public class PackAnalysisScreen extends BaseOwoScreen<FlowLayout> {
             if(!provider.type().equals("bitmap")) continue;
 
             above = Math.max(above, provider.ascent() - BASELINE);
-            below = Math.max(below, provider.height() - provider.ascent() + BASELINE - Minecraft.getInstance().font.lineHeight);
+            below = Math.max(below, provider.height() - provider.ascent() + BASELINE - renderer.lineHeight);
 
             for (int codepoint : provider.codepoints()) {
                 //Empty cells of the grid
                 if(codepoint == 0 || count >= MAX_PREVIEW_GLYPHS) continue;
+
+                if(renderer.width(Component.literal(Character.toString(codepoint)).withStyle(style)) > labelWidth()){
+                    tooWide++;
+                    continue;
+                }
+
                 glyphs.appendCodePoint(codepoint).append(' ');
                 count++;
             }
         }
 
-        if(count == 0) return null;
+        if(tooWide > 0){
+            container.child(label(tooWide + (tooWide == 1 ? " glyph is" : " glyphs are") + " too wide to preview").color(MUTED));
+        }
+
+        if(count == 0) return;
         above = Mth.clamp(above, 0, MAX_PREVIEW_EXTENT);
         below = Mth.clamp(below, 0, MAX_PREVIEW_EXTENT);
 
-        Component text = Component.literal(glyphs.toString())
-                .withStyle(Style.EMPTY.withFont(new FontDescription.Resource(font.id())));
-
         //The label draws text at the bottom of its line, so the room above goes into the line and the room below between lines
-        LabelComponent label = label(text);
-        label.lineHeight(Minecraft.getInstance().font.lineHeight + above);
+        LabelComponent label = label(Component.literal(glyphs.toString()).withStyle(style));
+        label.lineHeight(renderer.lineHeight + above);
         label.lineSpacing(below);
         label.margins(Insets.of(2, below + 2, 0, 0));
-        return label;
+        container.child(label);
     }
 
     private static String describe(FontProvider provider){
@@ -270,8 +281,13 @@ public class PackAnalysisScreen extends BaseOwoScreen<FlowLayout> {
      */
     private LabelComponent label(Component text){
         LabelComponent label = UIComponents.label(text);
-        label.maxWidth(Math.max(100, this.width - 60));
+        //Not maxWidth: owo wraps again and again without end when a single glyph is wider than that
+        label.horizontalSizing(Sizing.fixed(labelWidth()));
         return label;
+    }
+
+    private int labelWidth(){
+        return Math.max(100, this.width - 60);
     }
 
 }
