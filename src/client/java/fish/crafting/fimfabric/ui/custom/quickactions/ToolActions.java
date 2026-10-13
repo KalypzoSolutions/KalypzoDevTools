@@ -1,5 +1,8 @@
 package fish.crafting.fimfabric.ui.custom.quickactions;
 
+import fish.crafting.fimfabric.inspect.dump.Dumper;
+import fish.crafting.fimfabric.inspect.screen.PackAnalysisScreen;
+import fish.crafting.fimfabric.rendering.InformationFeedManager;
 import fish.crafting.fimfabric.tools.PosRotated;
 import fish.crafting.fimfabric.tools.PosScaled;
 import fish.crafting.fimfabric.tools.Positioned;
@@ -10,6 +13,7 @@ import fish.crafting.fimfabric.ui.actions.ActionElement;
 import fish.crafting.fimfabric.ui.actions.BlockPosActionElement;
 import fish.crafting.fimfabric.ui.actions.UIActionList;
 import fish.crafting.fimfabric.util.*;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Pose;
@@ -28,6 +32,44 @@ public class ToolActions extends UIActionList {
         addElement(new MoveToPlayerLooking());
         addSeparator();
         addElement(new SetBoxTo111());
+        addSeparator();
+        addElement(new DumpView());
+        addElement(new AnalyzeResourcePacks());
+    }
+
+    private static class DumpView extends ActionElement {
+        public DumpView() {
+            super(FancyText.of("Dump View"));
+        }
+
+        @Override
+        protected void activate(ClickContext context) {
+            //Reaches here for the release as well if the list is held open
+            if(!context.isPress()) return;
+
+            Dumper.requestViewDump();
+            SoundUtil.clickSound();
+        }
+    }
+
+    private static class AnalyzeResourcePacks extends ActionElement {
+        public AnalyzeResourcePacks() {
+            super(FancyText.of("Resource Pack Analysis"));
+        }
+
+        @Override
+        protected void activate(ClickContext context) {
+            if(!context.isPress()) return;
+
+            //owo is optional, without it the screen has nothing to build on
+            if(!FabricLoader.getInstance().isModLoaded("owo")){
+                InformationFeedManager.error("The pack analysis needs owo-lib", true);
+                return;
+            }
+
+            PackAnalysisScreen.open();
+            SoundUtil.clickSound();
+        }
     }
 
     private static class TeleportToCenter extends ActionElement {

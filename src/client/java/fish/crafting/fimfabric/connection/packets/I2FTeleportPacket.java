@@ -44,7 +44,7 @@ public class I2FTeleportPacket implements InPacket {
         if (networkHandler == null) return;
 
         //Setup teleport command
-        String teleportCommand = "minecraft:teleport @s " + x + " " + y + " " + z;
+            String teleportCommand = "minecraft:teleport @s " + x + " " + y + " " + z;
         if (hasRot) {
             teleportCommand += " " + (double) yaw + " " + (double) pitch;
         }

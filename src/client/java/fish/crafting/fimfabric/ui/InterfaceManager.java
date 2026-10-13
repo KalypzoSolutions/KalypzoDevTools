@@ -47,6 +47,8 @@ public class InterfaceManager {
     private final Queue<Runnable> postRenderTaskQueue = new ArrayDeque<>();
 
     private boolean updateHover = false;
+    //Buttons whose press was kept from the screen, so their release has to be kept from it as well
+    private int swallowedButtons = 0;
 
     private InterfaceManager(){
         instance = this;
@@ -188,30 +190,53 @@ public class InterfaceManager {
         scroller.addAnimatedScroll((float) scroll);
     }
 
-    public void handleClick(int button, int action, int mods){
+    /**
+     * @return Whether the click has to be kept from the screen underneath
+     */
+    public boolean handleClick(int button, int action, int mods){
         boolean hoveringNothingOrBase = currentlyHovering == null || currentlyHovering instanceof UIBaseLayer;
+        boolean actionListOpen = activeActionList != null && activeActionList.isEnabled();
 
-        if(activeActionList != null && activeActionList.isEnabled() && action == 0) {
+        Screen currentScreen = Minecraft.getInstance().gui.screen();
+        //The chat is FIM's own ground. Any other screen belongs to the game or the server, and a click
+        //meant for FIM must not also move the item below it or get reported as a click outside.
+        boolean foreignScreen = currentScreen != null && !(currentScreen instanceof ChatScreen);
+        boolean rightClickOnFreeArea = foreignScreen && hoveringNothingOrBase && button == GLFW.GLFW_MOUSE_BUTTON_RIGHT
+                && ScreenFreeArea.isFree(currentScreen, MouseUtil.scaledXInt(), MouseUtil.scaledYInt());
+
+        int buttonBit = 1 << button;
+        boolean swallow;
+        if(action == GLFW.GLFW_PRESS){
+            swallow = foreignScreen && (!hoveringNothingOrBase || actionListOpen || rightClickOnFreeArea);
+            if(swallow) swallowedButtons |= buttonBit;
+        }else{
+            swallow = (swallowedButtons & buttonBit) != 0;
+            swallowedButtons &= ~buttonBit;
+        }
+
+        if(actionListOpen && action == 0) {
             if(hoveringNothingOrBase || currentlyHovering.topMostParent(true) != activeActionList) {
                 actionList(null);
             }
         }
 
         if(hoveringNothingOrBase && button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && action == 0){
-            Screen currentScreen = Minecraft.getInstance().gui.screen();
-
             if(currentScreen instanceof ChatScreen) {
                 if(CursorPicking.areBlockPickingPrerequisitesMet()){
                     actionList(BLOCK_ACTIONS);
                 }else{
                     actionList(QUICK_ACTIONS);
                 }
+            }else if(swallow && rightClickOnFreeArea){
+                actionList(QUICK_ACTIONS);
             }
         }
 
         if(currentlyHovering != null) {
             currentlyHovering.onClick(new ClickContext(button, action, mods));
         }
+
+        return swallow;
     }
 
     public boolean isBlockActionListActive(){

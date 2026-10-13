@@ -24,9 +24,10 @@ Es gibt keine Tests.
   keine Kompatibilitäts-Shims und keine Versionsweichen — und es sollen auch keine eingeführt werden.
 - Minecraft ist unobfuskiert: Plugin `fabric-loom` (nicht `fabric-loom-remap`), Mojang-Namen, keine
   Mappings, **Java 25**.
-- Minecraft-, Loader-, Fabric-API- und Lombok-Version stehen in `gradle/libs.versions.toml`.
-- Versionssprung heißt: Versionen im Katalog anheben (siehe https://fabricmc.net/develop), Compile-Fehler
-  und Mixin-Ziele nachziehen, `runClient` prüfen. Alter Code für die Vorgängerversion fliegt raus.
+- Minecraft-, Loader-, Fabric-API-, Lombok- und owo-Version stehen in `gradle/libs.versions.toml`.
+- Versionssprung heißt: Versionen im Katalog anheben (siehe https://fabricmc.net/develop, owo unter
+  https://maven.wispforest.io/releases/io/wispforest/owo-lib), Compile-Fehler und Mixin-Ziele nachziehen,
+  `runClient` prüfen. Alter Code für die Vorgängerversion fliegt raus.
 - `mod_version` steht in `gradle.properties`; `fabric.mod.json` wird beim Build mit Version, MC-Version,
   Loader- und Java-Version befüllt (`${version}` etc. nicht durch feste Werte ersetzen).
 
@@ -37,4 +38,8 @@ Es gibt keine Tests.
   Ressourcen und den Mod-Einstiegspunkt.
 - Mixins heißen nach ihrer Zielklasse (`GuiMixin` → `Gui`) und stehen in `fim.client.mixins.json`. Dort gilt
   `defaultRequire: 1`, ein nicht greifender Inject bricht also den Start ab.
+- Neue Vollbild-Screens werden mit owo-ui gebaut (`BaseOwoScreen`, Vorlage: `inspect/screen/PackAnalysisScreen`).
+  Das Overlay in `ui/` bleibt beim eigenen System. owo ist für Nutzer optional, `owo-sentinel` ist gebündelt:
+  owo nicht als `depends` in `fabric.mod.json` eintragen und owo-Screens nur über eine statische Methode
+  hinter `isModLoaded("owo")` öffnen.
 - Entwickelt wird direkt auf `main`, ohne Feature-Branches oder PRs.

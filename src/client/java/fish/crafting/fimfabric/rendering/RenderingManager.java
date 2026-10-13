@@ -1,5 +1,6 @@
 package fish.crafting.fimfabric.rendering;
 
+import fish.crafting.fimfabric.inspect.dump.Dumper;
 import fish.crafting.fimfabric.rendering.custom.ScreenRenderContext;
 import fish.crafting.fimfabric.tools.CustomTool;
 import fish.crafting.fimfabric.tools.ToolManager;
@@ -26,6 +27,7 @@ public class RenderingManager {
 
     public void renderOverlay(DeltaTracker tickCounter, GuiGraphicsExtractor mcDrawContext) {
         if(Minecraft.getInstance().gui.overlay() != null) return; //Reloading textures bugfix
+        if(Dumper.captureFrame()) return;
 
         ScreenRenderContext context = new ScreenRenderContext(mcDrawContext);
 

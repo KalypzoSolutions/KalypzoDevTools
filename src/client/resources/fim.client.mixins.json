@@ -4,10 +4,15 @@
   "package": "fish.crafting.fimfabric.mixin",
   "compatibilityLevel": "JAVA_25",
   "client": [
+    "AbstractContainerScreenAccessor",
+    "BossHealthOverlayAccessor",
+    "DialogScreenAccessor",
     "GuiMixin",
+    "HudAccessor",
     "HudMixin",
     "LevelRendererMixin",
     "MouseHandlerMixin",
+    "PlayerTabOverlayAccessor",
     "ScreenAccessor",
     "WindowMixin"
   ],

@@ -30,6 +30,19 @@ loom {
     }
 }
 
+repositories {
+    maven("https://maven.wispforest.io") {
+        name = "Wisp Forest"
+    }
+    // owo pulls kdl4j, which is only published there
+    maven("https://jitpack.io") {
+        name = "JitPack"
+        content {
+            includeGroup("com.github.kdl-org")
+        }
+    }
+}
+
 fabricApi {
     configureDataGeneration {
         client = true
@@ -40,6 +53,10 @@ dependencies {
     minecraft(libs.minecraft)
     implementation(libs.fabric.loader)
     implementation(libs.fabric.api)
+
+    implementation(libs.owo.lib)
+    // owo stays optional for users: sentinel offers to download it when it is missing
+    include(libs.owo.sentinel)
 
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)

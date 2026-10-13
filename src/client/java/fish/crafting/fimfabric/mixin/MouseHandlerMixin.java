@@ -26,7 +26,7 @@ public class MouseHandlerMixin {
         boolean cancel = false;
         MouseHandler mouse = (MouseHandler) (Object) this;
         if(!mouse.isMouseGrabbed()){
-            InterfaceManager.get().handleClick(buttonInfo.button(), action, buttonInfo.modifiers());
+            cancel = InterfaceManager.get().handleClick(buttonInfo.button(), action, buttonInfo.modifiers());
         }else{
             cancel = WorldSelectorManager.get().handlePress(buttonInfo.button(), action, buttonInfo.modifiers());
         }
