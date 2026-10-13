@@ -1,16 +1,17 @@
-# 🐟 Fish's Integrated Minecraft
+# Integrated Dev Tools for Minecraft
+
+Credits to [ACraftingFish](https://www.patreon.com/c/ACraftingFish) for creating the original FIM project, which this repository is based on.
+
+This repository is the Minecraft part of the project only.
 
 ![preview](https://github.com/user-attachments/assets/27bd3ba0-e1bd-43b0-b66f-338dbdaf5b6c)
+![example](https://github.com/user-attachments/assets/ae7ae914-95f5-475b-9c7e-cf22dfd34870)
+
+---
 
 Fish's Integrated Minecraft (FIM for short) is a **Minecraft-to-IntelliJ** integration that aims to eliminate tedious tasks when coding.
 
-Feel free to join our [Discord Server](https://discord.crafting.fish) to give suggestions, report bugs, or hang out!
 
-Help keep the project running by supporting me on [Patreon](https://www.patreon.com/c/ACraftingFish)! :)
-
-## 🔨 FIM-Fabric
-
-This repository is the Minecraft part of the project only.
 
 **NOTE: FIM is currently in an _early alpha_ stage, things are bound to break/change!**
 
@@ -36,6 +37,8 @@ _IntelliJ is not required in order to use Minecraft-only features of the mod!_
 - Minecraft world utilities
     - Quick block copying (Location, Center, Blockstate...)
 - Shortcut for quick swapping between IntelliJ & Minecraft
+- Server Resource Pack Analysis
+- View Dump
 
 Feel free to leave your suggestions in our [Discord Server](https://discord.crafting.fish)!
 
@@ -44,12 +47,13 @@ Feel free to leave your suggestions in our [Discord Server](https://discord.craf
 - Entity & Player world utilities (Copying UUIDs, Positions, etc.)
 - Customizable IntelliJ trigger classes for projects
 - Viewing Vectors/Locations from classes in Minecraft automatically
-- ResourcePack-related features
+- More ResourcePack-related features
 - *and more!*
 
 ## 😄 Special Thanks
 
-Special thanks to [8Blits](https://8blits.com/) for making sprites for the project!
+Special thanks to [8Blits](https://8blits.com/) for making sprites for the project and ACraftingFish for creating the original FIM project!
+
 
 ## 📃 License
 
