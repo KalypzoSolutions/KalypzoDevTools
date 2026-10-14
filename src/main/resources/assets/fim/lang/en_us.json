@@ -9,5 +9,7 @@
   "keybind.fim.scale_tool": "Toggle Scale Tool",
   "keybind.fim.quick_actions": "Open Quick Actions",
   "keybind.fim.snapping_previous": "Previous Snapping",
-  "keybind.fim.snapping_next": "Next Snapping"
+  "keybind.fim.snapping_next": "Next Snapping",
+  "keybind.fim.inspect": "Inspect Block / Item",
+  "keybind.fim.edit_item": "Edit Item Name & Lore"
 }

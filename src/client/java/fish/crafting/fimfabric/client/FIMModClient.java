@@ -4,6 +4,7 @@ import fish.crafting.fimfabric.listener.ConnectionShutdownListener;
 import fish.crafting.fimfabric.listener.GenericTickListener;
 import fish.crafting.fimfabric.listener.KeybindTickListener;
 import fish.crafting.fimfabric.connection.packetsystem.PacketManager;
+import fish.crafting.fimfabric.inspect.item.ItemInspectManager;
 import fish.crafting.fimfabric.keybind.*;
 import fish.crafting.fimfabric.rendering.world.WorldRenderingManager;
 import fish.crafting.fimfabric.titleoffset.TitleOffsetEditor;
@@ -28,6 +29,10 @@ public class FIMModClient implements ClientModInitializer {
 
         ClientLifecycleEvents.CLIENT_STOPPING.register(new ConnectionShutdownListener());
         ClientTickEvents.END_CLIENT_TICK.register(new GenericTickListener());
+        InspectKeybind inspectKeybind = new InspectKeybind();
+        EditItemKeybind editItemKeybind = new EditItemKeybind();
+        ItemInspectManager.get().bind(inspectKeybind.keyBinding, editItemKeybind.keyBinding);
+
         ClientTickEvents.END_CLIENT_TICK.register(new KeybindTickListener(
                 new SwitchToIntelliJKeybind(),
                 new ConfirmEditKeybind(),
@@ -36,7 +41,9 @@ public class FIMModClient implements ClientModInitializer {
                 new QuickActionsKeybind(),
                 new PreviousSnappingKeybind(),
                 new NextSnappingKeybind(),
-                new ScaleToolKeybind()
+                new ScaleToolKeybind(),
+                inspectKeybind,
+                editItemKeybind
         ));
 
         ToolRenderingManager.get();
