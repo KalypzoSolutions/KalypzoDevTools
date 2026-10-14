@@ -3,6 +3,7 @@ package fish.crafting.fimfabric.ai;
 import fish.crafting.fimfabric.client.FIMModClient;
 import net.minecraft.util.Util;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +23,7 @@ import java.util.concurrent.TimeUnit;
  *
  * <pre>{@code
  * List<LocalAi.Backend> available = LocalAi.available();
- * LocalAi.ask(available.getFirst(), "Rewrite this: ...").thenAccept(text -> ...);
+ * LocalAi.ask(available.getFirst(), null, "Rewrite this: ...").thenAccept(text -> ...);
  * }</pre>
  */
 public final class LocalAi {
@@ -32,21 +33,37 @@ public final class LocalAi {
     private LocalAi(){}
 
     public enum Backend {
-        CLAUDE_CODE("Claude Code", "claude", "-p"),
-        CODEX("OpenAI Codex", "codex", "exec", "--skip-git-repo-check", "--sandbox", "read-only", "-");
+        CLAUDE_CODE("Claude Code", "claude", List.of("-p"), "--model", List.of(),
+                List.of("sonnet", "opus", "haiku")),
+        CODEX("OpenAI Codex", "codex", List.of("exec", "--skip-git-repo-check", "--sandbox", "read-only"), "-m", List.of("-"),
+                List.of("gpt-5", "gpt-5-codex", "o4-mini"));
 
         private final String label;
         private final String executable;
         private final List<String> arguments;
+        private final String modelFlag;
+        //Has to come after everything else, Codex reads the prompt from "-"
+        private final List<String> trailing;
+        private final List<String> models;
 
-        Backend(String label, String executable, String... arguments){
+        Backend(String label, String executable, List<String> arguments, String modelFlag, List<String> trailing, List<String> models){
             this.label = label;
             this.executable = executable;
-            this.arguments = List.of(arguments);
+            this.arguments = arguments;
+            this.modelFlag = modelFlag;
+            this.trailing = trailing;
+            this.models = models;
         }
 
         public String label(){
             return label;
+        }
+
+        /**
+         * Model names the tool accepts, without the default that every tool has.
+         */
+        public List<String> models(){
+            return models;
         }
     }
 
@@ -68,11 +85,11 @@ public final class LocalAi {
      *
      * The tool starts in an empty temporary directory so it has no project to look at or change.
      */
-    public static @NotNull CompletableFuture<String> ask(@NotNull Backend backend, @NotNull String prompt){
-        return CompletableFuture.supplyAsync(() -> run(backend, prompt), Util.backgroundExecutor());
+    public static @NotNull CompletableFuture<String> ask(@NotNull Backend backend, @Nullable String model, @NotNull String prompt){
+        return CompletableFuture.supplyAsync(() -> run(backend, model, prompt), Util.backgroundExecutor());
     }
 
-    private static String run(Backend backend, String prompt){
+    private static String run(Backend backend, @Nullable String model, String prompt){
         Path executable = find(backend.executable);
         if(executable == null) throw new IllegalStateException(backend.label + " was not found on the PATH");
 
@@ -90,6 +107,11 @@ public final class LocalAi {
             }
             command.add(executable.toString());
             command.addAll(backend.arguments);
+            if(model != null){
+                command.add(backend.modelFlag);
+                command.add(model);
+            }
+            command.addAll(backend.trailing);
 
             process = new ProcessBuilder(command)
                     .directory(directory.toFile())

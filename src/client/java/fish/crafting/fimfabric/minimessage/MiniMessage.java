@@ -1,10 +1,13 @@
-package fish.crafting.fimfabric.inspect.item;
+package fish.crafting.fimfabric.minimessage;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.FontDescription;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
 import java.util.ArrayList;
@@ -56,12 +59,14 @@ public final class MiniMessage {
     );
 
     private static final Set<String> DECORATIONS = Set.of("bold", "italic", "underlined", "strikethrough", "obfuscated");
-    private static final Set<String> OTHER_TAGS = Set.of("color", "gradient", "rainbow", "reset", "newline", "key", "translatable");
+    private static final Set<String> OTHER_TAGS = Set.of("color", "gradient", "rainbow", "reset", "newline", "key", "translatable", "font", "image", "shift");
 
     private static final class Frame {
         final String name;
         final List<TextColor> colors = new ArrayList<>();
         boolean value = true;
+        //For the font tag
+        @Nullable FontDescription font = null;
         //Gradient and rainbow need to know how long the text inside of them is
         int total = 0;
         int seen = 0;
@@ -228,6 +233,31 @@ public final class MiniMessage {
                 open.add(frame);
             }
             case "rainbow" -> open.add(new Frame("rainbow"));
+            case "font" -> {
+                //The font id has a colon of its own: <font:namespace:path>
+                Identifier id = parts.length < 2 ? null : Identifier.tryParse(String.join(":", java.util.Arrays.copyOfRange(parts, 1, parts.length)));
+                if(id == null){
+                    warnings.add("<font> needs a font id, like <font:minecraft:default>");
+                    return true;
+                }
+
+                Frame frame = new Frame("font");
+                frame.font = new FontDescription.Resource(id);
+                open.add(frame);
+            }
+            case "image" -> {
+                //CraftEngine: <image:namespace:id>
+                String id = String.join(":", java.util.Arrays.copyOfRange(parts, 1, parts.length));
+                CraftEngineImages.Image image = CraftEngineImages.get().find(id);
+                if(image == null){
+                    warnings.add("Unknown image " + id + " - add it to " + CraftEngineImages.get().file().getFileName());
+                    return false;
+                }
+                runs.add(new Run("", new ArrayList<>(open), Component.literal(image.glyph())
+                        .withStyle(Style.EMPTY.withFont(image.font()))));
+            }
+            //Shifts need the negative space font of the server's pack, there is nothing to preview
+            case "shift" -> {}
             default -> {
                 //Only the decorations are left
                 Frame frame = new Frame(name);
@@ -289,6 +319,7 @@ public final class MiniMessage {
         for (Frame frame : frames) {
             switch (frame.name) {
                 case "color" -> style = style.withColor(frame.colors.getFirst());
+                case "font" -> style = style.withFont(frame.font);
                 case "bold" -> style = style.withBold(frame.value);
                 case "italic" -> style = style.withItalic(frame.value);
                 case "underlined" -> style = style.withUnderlined(frame.value);
@@ -341,12 +372,31 @@ public final class MiniMessage {
         component.visit((style, content) -> {
             if(content.isEmpty()) return Optional.empty();
 
-            if(!style.equals(previous[0])){
-                if(!previous[0].isEmpty()) out.append("<reset>");
-                appendStyle(out, style);
-                previous[0] = style;
+            //Icons of a CraftEngine server are glyphs of a custom font, they go back to their image tag
+            boolean customFont = style.getFont() instanceof FontDescription.Resource resource
+                    && !resource.equals(FontDescription.DEFAULT);
+            List<String> images = new ArrayList<>();
+            boolean allImages = customFont;
+            for (int codepoint : content.codePoints().toArray()) {
+                String id = customFont ? CraftEngineImages.get().idOf(style.getFont(), new String(Character.toChars(codepoint))) : null;
+                images.add(id);
+                if(id == null) allImages = false;
             }
-            out.append(content.replace("\\", "\\\\").replace("<", "\\<"));
+
+            //A font that only carries images needs no tag of its own
+            Style effective = allImages ? style.withFont(FontDescription.DEFAULT) : style;
+            if(!effective.equals(previous[0])){
+                if(!previous[0].isEmpty()) out.append("<reset>");
+                appendStyle(out, effective);
+                previous[0] = effective;
+            }
+
+            int index = 0;
+            for (int codepoint : content.codePoints().toArray()) {
+                String id = images.get(index++);
+                if(id != null) out.append("<image:").append(id).append('>');
+                else out.append(new String(Character.toChars(codepoint)).replace("\\", "\\\\").replace("<", "\\<"));
+            }
             return Optional.empty();
         }, Style.EMPTY);
 
@@ -355,6 +405,9 @@ public final class MiniMessage {
 
     private static void appendStyle(StringBuilder out, Style style){
         if(style.getColor() != null) out.append('<').append(style.getColor().serialize().toLowerCase(Locale.ROOT)).append('>');
+        if(style.getFont() instanceof FontDescription.Resource resource && !resource.equals(FontDescription.DEFAULT)){
+            out.append("<font:").append(resource.id()).append('>');
+        }
         decoration(out, "bold", style.isBold(), !style.equals(style.withBold(null)));
         decoration(out, "italic", style.isItalic(), !style.equals(style.withItalic(null)));
         decoration(out, "underlined", style.isUnderlined(), !style.equals(style.withUnderlined(null)));

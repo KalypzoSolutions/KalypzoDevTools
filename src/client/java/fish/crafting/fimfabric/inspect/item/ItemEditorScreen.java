@@ -2,6 +2,10 @@ package fish.crafting.fimfabric.inspect.item;
 
 import com.mojang.serialization.JsonOps;
 import fish.crafting.fimfabric.ai.ItemTextPrompt;
+import fish.crafting.fimfabric.minimessage.CraftEngineImages;
+import fish.crafting.fimfabric.minimessage.MiniMessage;
+import fish.crafting.fimfabric.minimessage.MiniMessageTextArea;
+import fish.crafting.fimfabric.minimessage.MiniMessageToolbar;
 import fish.crafting.fimfabric.ai.LocalAi;
 import fish.crafting.fimfabric.rendering.InformationFeedManager;
 import fish.crafting.fimfabric.util.SoundUtil;
@@ -10,7 +14,9 @@ import io.wispforest.owo.ui.component.ButtonComponent;
 import io.wispforest.owo.ui.component.LabelComponent;
 import io.wispforest.owo.ui.component.TextAreaComponent;
 import io.wispforest.owo.ui.component.TextBoxComponent;
+import io.wispforest.owo.ui.component.DropdownComponent;
 import io.wispforest.owo.ui.component.UIComponents;
+import io.wispforest.owo.ui.container.OverlayContainer;
 import io.wispforest.owo.ui.container.FlowLayout;
 import io.wispforest.owo.ui.container.UIContainers;
 import io.wispforest.owo.ui.core.*;
@@ -44,35 +50,37 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
     //Share of the screen the editor column gets, the preview takes the rest
     private static final double EDITOR_SHARE = 0.6;
 
-    //Quick buttons: label, text that goes into the field
-    private static final String[][] STYLE_TAGS = {
-            {"Bold", "<bold>"}, {"Italic", "<italic>"}, {"Underline", "<underlined>"},
-            {"Strike", "<strikethrough>"}, {"Obfuscated", "<obfuscated>"}, {"No italic", "<!italic>"}, {"Reset", "<reset>"}
-    };
-    private static final String[][] COLOR_TAGS = {
-            {"Red", "<red>"}, {"Gold", "<gold>"}, {"Yellow", "<yellow>"}, {"Green", "<green>"},
-            {"Aqua", "<aqua>"}, {"Blue", "<blue>"}, {"Purple", "<light_purple>"}, {"Gray", "<gray>"},
-            {"Hex", "<#ff8800>"}, {"Gradient", "<gradient:#ff5555:#5555ff>"}, {"Rainbow", "<rainbow>"}
-    };
+    //What the server sent for a stack before the first client side edit, so it can be brought back
+    private static final java.util.Map<ItemStack, ItemStack> SERVER_STATE =
+            java.util.Collections.synchronizedMap(new java.util.WeakHashMap<>());
 
     private final @Nullable Screen parent;
     //The stack that gets changed, and what it looked like before
     private final ItemStack target;
     private final ItemStack original;
 
-    private TextBoxComponent nameBox;
-    private TextAreaComponent loreArea;
-    private TextBoxComponent instructionBox;
-    private ButtonComponent backendButton;
+    private MiniMessageTextArea nameBox;
+    private MiniMessageTextArea loreArea;
+    private FlowLayout rootLayout;
+    private ButtonComponent modelButton;
     private ButtonComponent rewriteButton;
     private ButtonComponent undoButton;
     private FlowLayout preview;
     private LabelComponent warnings;
     private LabelComponent status;
-    private io.wispforest.owo.ui.core.UIComponent lastFocused;
+    private MiniMessageTextArea lastFocused;
+
+    //The AI panel only exists while it is open, the task text outlives it
+    private @Nullable OverlayContainer<FlowLayout> aiOverlay;
+    private @Nullable TextAreaComponent aiTaskArea;
+    private @Nullable LabelComponent aiStatus;
+    private @Nullable LabelComponent aiModelLabel;
+    private String aiTask = "";
 
     private final List<LocalAi.Backend> backends = LocalAi.available();
-    private int backend = 0;
+    private @Nullable LocalAi.Backend selectedBackend = null;
+    //Null stands for the default model of the tool
+    private @Nullable String selectedModel = null;
     private boolean asking = false;
     private boolean closed = false;
     //What the fields held before the last AI answer replaced them
@@ -105,6 +113,8 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         root.padding(Insets.of(10));
         root.surface(Surface.VANILLA_TRANSLUCENT);
 
+        rootLayout = root;
+
         //Header
         FlowLayout header = UIContainers.horizontalFlow(Sizing.fill(100), Sizing.content());
         header.gap(6);
@@ -113,6 +123,19 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         header.child(UIComponents.label(Component.literal("Item Editor  -  "
                 + BuiltInRegistries.ITEM.getKey(target.getItem()))).shadow(true));
         header.child(UIComponents.spacer().verticalSizing(Sizing.fixed(1)));
+
+        if(!backends.isEmpty() && selectedBackend == null) selectedBackend = backends.getFirst();
+
+        //One button in two parts: the left opens the assistant, the right drops down tool and model
+        FlowLayout split = UIContainers.horizontalFlow(Sizing.content(), Sizing.content());
+        split.gap(0);
+        split.child(button("AI Assistant", this::toggleAiPanel));
+        modelButton = button("v", this::openModelMenu);
+        modelButton.horizontalSizing(Sizing.fixed(18));
+        modelButton.tooltip(Component.literal(modelLabel()));
+        split.child(modelButton);
+        header.child(split);
+
         header.child(UIComponents.button(Component.literal("Done"), button -> onClose()));
         root.child(header);
 
@@ -128,15 +151,18 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         body.child(UIContainers.verticalScroll(Sizing.fill((int) (EDITOR_SHARE * 100)), Sizing.fill(100), editor));
 
         editor.child(UIComponents.label(Component.literal("Name")).color(MUTED));
-        nameBox = UIComponents.textBox(Sizing.fill(100), MiniMessage.serialize(
+        nameBox = new MiniMessageTextArea(Sizing.fill(100), Sizing.fixed(30), MiniMessage.serialize(
                 target.has(DataComponents.CUSTOM_NAME) ? target.get(DataComponents.CUSTOM_NAME) : Component.empty()));
-        nameBox.setMaxLength(2048);
+        nameBox.setCharacterLimit(2048);
+        //A name is one line
+        nameBox.maxLines(1);
         nameBox.onChanged().subscribe(text -> refresh());
         nameBox.focusGained().subscribe(source -> lastFocused = nameBox);
         editor.child(nameBox);
 
         editor.child(UIComponents.label(Component.literal("Lore  (one line per row)")).color(MUTED));
-        loreArea = UIComponents.textArea(Sizing.fill(100), Sizing.fixed(Math.max(70, this.height / 4)), loreText());
+        loreArea = new MiniMessageTextArea(Sizing.fill(100), Sizing.fixed(Math.max(90, this.height / 3)), loreText());
+        loreArea.setCharacterLimit(32767);
         loreArea.onChanged().subscribe(text -> refresh());
         loreArea.focusGained().subscribe(source -> lastFocused = loreArea);
         lastFocused = loreArea;
@@ -147,14 +173,20 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         warnings.horizontalSizing(Sizing.fill(100));
         editor.child(warnings);
 
-        //Right below the text it works on, so it is the first thing seen
-        editor.child(section("AI assistant"));
-        editor.child(aiControls());
+        status = UIComponents.label(Component.empty());
+        status.color(MUTED);
+        status.horizontalSizing(Sizing.fill(100));
+        editor.child(status);
 
-        editor.child(section("Styles"));
-        editor.child(buttonRows(tagButtons(STYLE_TAGS), editorWidth()));
-        editor.child(section("Colors"));
-        editor.child(buttonRows(tagButtons(COLOR_TAGS), editorWidth()));
+        //One toolbar for both fields, it acts on the one that was used last
+        editor.child(section("Format  (select text first, Ctrl+Z undo, Ctrl+B/I/U)"));
+        editor.child(MiniMessageToolbar.create(editorWidth(), () -> lastFocused, List.of(
+                new MiniMessageToolbar.Extra("No italic", "<!italic>", null),
+                new MiniMessageToolbar.Extra("Reset", "<reset>", null),
+                new MiniMessageToolbar.Extra("Image", "<image:default:name>", null),
+                new MiniMessageToolbar.Extra("Font", "<font:minecraft:default>", "</font>"),
+                new MiniMessageToolbar.Extra("Shift", "<shift:8>", null)
+        )));
 
         //Preview
         FlowLayout side = UIContainers.verticalFlow(Sizing.expand(), Sizing.fill(100));
@@ -169,6 +201,9 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         side.child(UIContainers.verticalScroll(Sizing.fill(100), Sizing.expand(), preview));
 
         //Action bar
+        undoButton = button("Undo AI", this::undoAi);
+        undoButton.active(beforeAi != null);
+
         FlowLayout actions = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content());
         actions.surface(Surface.flat(0x66000000));
         actions.padding(Insets.of(4));
@@ -176,6 +211,8 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
                 button("Apply", () -> apply(false)),
                 button("Apply & Close", () -> apply(true)),
                 button("Reset", this::reset),
+                button("Restore server state", this::restoreServerState),
+                undoButton,
                 button("Copy MiniMessage", this::copyMiniMessage),
                 button("Copy /give", this::copyGive),
                 button("Copy as Java", this::copyJava)
@@ -184,6 +221,7 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
 
         refresh();
     }
+
 
     private int editorWidth(){
         return (int) (this.width * EDITOR_SHARE) - 40;
@@ -222,16 +260,6 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         return button;
     }
 
-    private List<ButtonComponent> tagButtons(String[][] tags){
-        List<ButtonComponent> buttons = new ArrayList<>();
-        for (String[] tag : tags) {
-            ButtonComponent button = button(tag[0], () -> insert(tag[1]));
-            button.tooltip(Component.literal(tag[1]));
-            buttons.add(button);
-        }
-        return buttons;
-    }
-
     /**
      * Puts the buttons into rows that break before they run out of the editor column.
      */
@@ -257,112 +285,197 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         return rows;
     }
 
-    private FlowLayout aiControls(){
-        FlowLayout box = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content());
-        box.gap(3);
-
-        if(backends.isEmpty()){
-            LabelComponent none = UIComponents.label(Component.literal("Neither claude (Claude Code) nor codex (OpenAI Codex) was found on the PATH of this game. Start the game from a terminal where the command works."));
-            none.color(MUTED);
-            none.horizontalSizing(Sizing.fill(100));
-            box.child(none);
-        }
-
-        instructionBox = UIComponents.textBox(Sizing.fill(100));
-        instructionBox.setMaxLength(500);
-        instructionBox.setSuggestion("What should change? e.g. \"make it sound legendary\"");
-        instructionBox.onChanged().subscribe(text -> instructionBox.setSuggestion(text.isEmpty()
-                ? "What should change? e.g. \"make it sound legendary\"" : ""));
-        box.child(instructionBox);
-
-        backendButton = button(backendLabel(), this::cycleBackend);
-        backendButton.horizontalSizing(Sizing.fixed(Math.max(120, this.font.width("AI: OpenAI Codex") + 14)));
-        rewriteButton = button("Rewrite", this::rewrite);
-        undoButton = button("Undo", this::undoAi);
-        rewriteButton.active(!backends.isEmpty());
-        undoButton.active(false);
-
-        box.child(buttonRows(List.of(backendButton, rewriteButton, undoButton), editorWidth()));
-
-        status = UIComponents.label(Component.empty());
-        status.color(MUTED);
-        status.horizontalSizing(Sizing.fill(100));
-        box.child(status);
-        return box;
-    }
-
     // ------------------------------------------------------------------ AI
 
-    private String backendLabel(){
-        return backends.isEmpty() ? "AI: not found" : "AI: " + backends.get(backend).label();
+    private String modelLabel(){
+        if(selectedBackend == null) return "No AI found";
+        return selectedBackend.label() + " / " + (selectedModel == null ? "default" : selectedModel);
     }
 
-    private void cycleBackend(){
-        if(backends.isEmpty()) return;
-        backend = (backend + 1) % backends.size();
-        backendButton.setMessage(Component.literal(backendLabel()));
+    private void select(LocalAi.Backend backend, @Nullable String model){
+        selectedBackend = backend;
+        selectedModel = model;
+        modelButton.tooltip(Component.literal(modelLabel()));
+        if(aiModelLabel != null) aiModelLabel.text(Component.literal("Using: " + modelLabel()));
+        if(rewriteButton != null) rewriteButton.active(!asking);
+    }
+
+    /**
+     * The second button of the AI pair: picks the tool and, below it, the model.
+     */
+    private void openModelMenu(){
+        //One flat list: submenus would open to the right of a button that already sits at the screen edge
+        int menuWidth = 190;
+        int x = Math.max(4, Math.min(modelButton.x() + modelButton.width() - menuWidth, this.width - menuWidth - 4));
+
+        DropdownComponent.openContextMenu(this, rootLayout, FlowLayout::child,
+                x, modelButton.y() + modelButton.height(), menu -> {
+                    menu.text(Component.literal("Using: " + modelLabel()));
+                    menu.divider();
+                    if(backends.isEmpty()){
+                        menu.text(Component.literal("Neither claude nor codex was found"));
+                        menu.text(Component.literal("on the PATH of this game"));
+                        return;
+                    }
+
+                    for (LocalAi.Backend backend : backends) {
+                        menu.text(Component.literal(backend.label()));
+                        menu.button(Component.literal("   default"), d -> select(backend, null));
+                        for (String model : backend.models()) {
+                            menu.button(Component.literal("   " + model), d -> select(backend, model));
+                        }
+                    }
+                });
+    }
+
+    /**
+     * Everything known about the item, one fact per line, in the words of the inspector.
+     */
+    private String itemData(){
+        StringBuilder data = new StringBuilder();
+        for (Inspection.Row row : Inspection.ofItem(target).rows()) {
+            if(row.heading()){
+                data.append('\n').append(row.key()).append(":\n");
+            } else if(row.key().isEmpty()){
+                data.append("  ").append(row.value()).append('\n');
+            } else {
+                data.append("  ").append(row.key()).append(": ").append(row.value()).append('\n');
+            }
+        }
+        return data.toString().strip();
+    }
+
+    private void toggleAiPanel(){
+        if(aiOverlay != null){
+            closeAiPanel();
+            return;
+        }
+
+        FlowLayout panel = UIContainers.verticalFlow(Sizing.fixed(Math.clamp(this.width - 40, 200, 440)), Sizing.content());
+        panel.surface(Surface.DARK_PANEL);
+        panel.padding(Insets.of(10));
+        panel.gap(6);
+        panel.positioning(Positioning.relative(50, 40));
+
+        panel.child(UIComponents.label(Component.literal("AI Assistant")).color(SECTION).shadow(true));
+
+        LabelComponent sent = UIComponents.label(Component.literal(
+                "Sent to the AI: item id, count, all components, tags, the current name and lore, and your task. "
+                        + "The AI answers with a new name and lore that replace the fields."));
+        sent.color(MUTED);
+        sent.horizontalSizing(Sizing.fill(100));
+        panel.child(sent);
+
+        panel.child(UIComponents.label(Component.literal("Task")).color(MUTED));
+        aiTaskArea = UIComponents.textArea(Sizing.fill(100), Sizing.fixed(90), aiTask);
+        aiTaskArea.onChanged().subscribe(text -> aiTask = text);
+        panel.child(aiTaskArea);
+
+        LabelComponent hint = UIComponents.label(Component.literal(
+                "e.g. \"make it sound legendary\", \"gold gradient name, three short lore lines\", \"translate to German\""));
+        hint.color(MUTED);
+        hint.horizontalSizing(Sizing.fill(100));
+        panel.child(hint);
+
+        aiModelLabel = UIComponents.label(Component.literal("Using: " + modelLabel()));
+        aiModelLabel.color(MUTED);
+        panel.child(aiModelLabel);
+
+        aiStatus = UIComponents.label(Component.empty());
+        aiStatus.color(WARNING);
+        aiStatus.horizontalSizing(Sizing.fill(100));
+        panel.child(aiStatus);
+
+        FlowLayout row = UIContainers.horizontalFlow(Sizing.fill(100), Sizing.content());
+        row.gap(4);
+        rewriteButton = button("Run", this::rewrite);
+        rewriteButton.active(selectedBackend != null && !asking);
+        row.child(rewriteButton);
+        row.child(button("Close", this::closeAiPanel));
+        panel.child(row);
+
+        aiOverlay = UIContainers.overlay(panel);
+        aiOverlay.closeOnClick(false);
+        rootLayout.child(aiOverlay);
+    }
+
+    private void closeAiPanel(){
+        if(aiOverlay == null) return;
+
+        aiOverlay.remove();
+        aiOverlay = null;
+        aiTaskArea = null;
+        aiStatus = null;
+        aiModelLabel = null;
+        rewriteButton = null;
+    }
+
+    private void aiMessage(String text, boolean problem){
+        if(aiStatus == null) return;
+        aiStatus.color(problem ? WARNING : MUTED);
+        aiStatus.text(Component.literal(text));
     }
 
     private void rewrite(){
-        if(asking || backends.isEmpty()) return;
+        if(asking || selectedBackend == null) return;
 
-        LocalAi.Backend chosen = backends.get(backend);
-        String prompt = ItemTextPrompt.build(
-                BuiltInRegistries.ITEM.getKey(target.getItem()).toString(),
-                nameBox.getValue(), loreArea.getValue(), instructionBox.getValue());
+        String prompt = ItemTextPrompt.build(itemData(), nameBox.getValue(), loreArea.getValue(), aiTask,
+                CraftEngineImages.get().ids());
+        LocalAi.Backend backend = selectedBackend;
 
         asking = true;
         rewriteButton.active(false);
-        status.color(MUTED);
-        status.text(Component.literal("Asking " + chosen.label() + "..."));
+        aiMessage("Asking " + modelLabel() + "... this can take a minute", false);
 
         Minecraft mc = Minecraft.getInstance();
-        LocalAi.ask(chosen, prompt).whenComplete((reply, error) -> mc.execute(() -> {
+        LocalAi.ask(backend, selectedModel, prompt).whenComplete((reply, error) -> mc.execute(() -> {
             asking = false;
             if(closed) return;
+            if(rewriteButton != null) rewriteButton.active(true);
 
-            rewriteButton.active(true);
             if(error != null){
                 Throwable cause = error.getCause() != null ? error.getCause() : error;
-                status.color(WARNING);
-                status.text(Component.literal(String.valueOf(cause.getMessage())));
+                aiMessage(String.valueOf(cause.getMessage()), true);
                 return;
             }
 
-            ItemTextPrompt.Answer answer = ItemTextPrompt.parse(reply);
-            if(answer.isEmpty()){
-                status.color(WARNING);
-                status.text(Component.literal("The answer had no <name> or <lore> in it"));
+            ItemTextPrompt.Answer answer;
+            try {
+                answer = ItemTextPrompt.parse(reply);
+            } catch (IllegalArgumentException e) {
+                aiMessage(e.getMessage(), true);
+                return;
+            }
+
+            if(!answer.changesAnything()){
+                aiMessage(answer.notes() != null ? answer.notes() : "The AI changed nothing", false);
                 return;
             }
 
             beforeAi = new String[]{nameBox.getValue(), loreArea.getValue()};
             undoButton.active(true);
-            if(answer.name() != null) nameBox.text(answer.name());
-            if(answer.lore() != null) loreArea.text(answer.lore());
-
-            status.color(MUTED);
-            status.text(Component.literal("Done, Undo brings your text back"));
+            if(answer.name() != null) nameBox.replaceAll(answer.name());
+            if(answer.lore() != null) loreArea.replaceAll(String.join("\n", answer.lore()));
             refresh();
+
+            closeAiPanel();
+            status.text(Component.literal("AI: " + (answer.notes() != null ? answer.notes() : "applied to the fields")
+                    + "  (Undo AI brings your text back)"));
         }));
     }
 
     private void undoAi(){
         if(beforeAi == null) return;
 
-        nameBox.text(beforeAi[0]);
-        loreArea.text(beforeAi[1]);
+        nameBox.replaceAll(beforeAi[0]);
+        loreArea.replaceAll(beforeAi[1]);
         beforeAi = null;
         undoButton.active(false);
+        status.text(Component.empty());
         refresh();
     }
 
     // ------------------------------------------------------------------ actions
-
-    private void insert(String tag){
-        if(lastFocused instanceof TextBoxComponent box) box.text(box.getValue() + tag);
-        else if(lastFocused instanceof TextAreaComponent area) area.text(area.getValue() + tag);
-    }
 
     /**
      * Writes the editor's content into a stack, without touching the client's own stack.
@@ -377,7 +490,39 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         else stack.set(DataComponents.LORE, new ItemLore(MiniMessage.parse(lore).lines()));
     }
 
+    /**
+     * Brings the item back the way the server sent it, however often it was edited here.
+     */
+    private void restoreServerState(){
+        ItemStack server = SERVER_STATE.get(target);
+        if(server == null){
+            InformationFeedManager.info("Nothing to restore, the item is as the server sent it", false);
+            return;
+        }
+
+        Component name = server.get(DataComponents.CUSTOM_NAME);
+        if(name == null) target.remove(DataComponents.CUSTOM_NAME);
+        else target.set(DataComponents.CUSTOM_NAME, name);
+
+        ItemLore lore = server.get(DataComponents.LORE);
+        if(lore == null) target.remove(DataComponents.LORE);
+        else target.set(DataComponents.LORE, lore);
+        SERVER_STATE.remove(target);
+
+        //The fields follow, as one step that can be undone
+        nameBox.replaceAll(name == null ? "" : MiniMessage.serialize(name));
+        List<String> lines = new ArrayList<>();
+        if(lore != null) for (Component line : lore.lines()) lines.add(MiniMessage.serialize(line));
+        loreArea.replaceAll(String.join("\n", lines));
+
+        InformationFeedManager.success("Server state restored", false);
+        SoundUtil.clickSound();
+        refresh();
+    }
+
     private void apply(boolean close){
+        //The first edit keeps what the server had
+        SERVER_STATE.computeIfAbsent(target, ItemStack::copy);
         write(target);
         InformationFeedManager.success("Applied (client side only)", false);
         SoundUtil.clickSound();
@@ -386,12 +531,12 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
 
     private void reset(){
         Component name = original.get(DataComponents.CUSTOM_NAME);
-        nameBox.text(name == null ? "" : MiniMessage.serialize(name));
+        nameBox.replaceAll(name == null ? "" : MiniMessage.serialize(name));
 
         ItemLore lore = original.get(DataComponents.LORE);
         List<String> lines = new ArrayList<>();
         if(lore != null) for (Component line : lore.lines()) lines.add(MiniMessage.serialize(line));
-        loreArea.text(String.join("\n", lines));
+        loreArea.replaceAll(String.join("\n", lines));
         refresh();
     }
 

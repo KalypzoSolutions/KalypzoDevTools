@@ -11,6 +11,7 @@
     "HudAccessor",
     "HudMixin",
     "LevelRendererMixin",
+    "MultilineTextFieldAccessor",
     "MouseHandlerMixin",
     "PlayerTabOverlayAccessor",
     "ScreenAccessor",
