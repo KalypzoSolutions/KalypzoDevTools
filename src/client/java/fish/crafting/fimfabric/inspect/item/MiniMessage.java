@@ -122,9 +122,7 @@ public final class MiniMessage {
         }
 
         flush(text, open, runs);
-        for (Frame frame : open) {
-            warnings.add("<" + frame.name + "> is never closed");
-        }
+        //Tags that are never closed are fine, they simply last until the end of the line
 
         return render(runs);
     }
