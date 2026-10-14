@@ -121,9 +121,11 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         body.gap(10);
         root.child(body);
 
-        FlowLayout editor = UIContainers.verticalFlow(Sizing.fill((int) (EDITOR_SHARE * 100)), Sizing.fill(100));
+        //The editor scrolls, the action bar below does not: the buttons stay reachable on any window size
+        FlowLayout editor = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content());
         editor.gap(4);
-        body.child(editor);
+        editor.padding(Insets.right(8));
+        body.child(UIContainers.verticalScroll(Sizing.fill((int) (EDITOR_SHARE * 100)), Sizing.fill(100), editor));
 
         editor.child(UIComponents.label(Component.literal("Name")).color(MUTED));
         nameBox = UIComponents.textBox(Sizing.fill(100), MiniMessage.serialize(
@@ -134,36 +136,25 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         editor.child(nameBox);
 
         editor.child(UIComponents.label(Component.literal("Lore  (one line per row)")).color(MUTED));
-        loreArea = UIComponents.textArea(Sizing.fill(100), Sizing.expand(), loreText());
+        loreArea = UIComponents.textArea(Sizing.fill(100), Sizing.fixed(Math.max(70, this.height / 4)), loreText());
         loreArea.onChanged().subscribe(text -> refresh());
         loreArea.focusGained().subscribe(source -> lastFocused = loreArea);
         lastFocused = loreArea;
         editor.child(loreArea);
-
-        editor.child(section("Styles"));
-        editor.child(buttonRows(tagButtons(STYLE_TAGS)));
-        editor.child(section("Colors"));
-        editor.child(buttonRows(tagButtons(COLOR_TAGS)));
-
-        editor.child(section("AI assistant"));
-        editor.child(aiControls());
 
         warnings = UIComponents.label(Component.empty());
         warnings.color(WARNING);
         warnings.horizontalSizing(Sizing.fill(100));
         editor.child(warnings);
 
-        editor.child(section("Item"));
-        editor.child(buttonRows(List.of(
-                button("Apply", () -> apply(false)),
-                button("Apply & Close", () -> apply(true)),
-                button("Reset", this::reset)
-        )));
-        editor.child(buttonRows(List.of(
-                button("Copy MiniMessage", this::copyMiniMessage),
-                button("Copy /give", this::copyGive),
-                button("Copy as Java", this::copyJava)
-        )));
+        //Right below the text it works on, so it is the first thing seen
+        editor.child(section("AI assistant"));
+        editor.child(aiControls());
+
+        editor.child(section("Styles"));
+        editor.child(buttonRows(tagButtons(STYLE_TAGS), editorWidth()));
+        editor.child(section("Colors"));
+        editor.child(buttonRows(tagButtons(COLOR_TAGS), editorWidth()));
 
         //Preview
         FlowLayout side = UIContainers.verticalFlow(Sizing.expand(), Sizing.fill(100));
@@ -177,7 +168,25 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         preview.gap(1);
         side.child(UIContainers.verticalScroll(Sizing.fill(100), Sizing.expand(), preview));
 
+        //Action bar
+        FlowLayout actions = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content());
+        actions.surface(Surface.flat(0x66000000));
+        actions.padding(Insets.of(4));
+        actions.child(buttonRows(List.of(
+                button("Apply", () -> apply(false)),
+                button("Apply & Close", () -> apply(true)),
+                button("Reset", this::reset),
+                button("Copy MiniMessage", this::copyMiniMessage),
+                button("Copy /give", this::copyGive),
+                button("Copy as Java", this::copyJava)
+        ), this.width - 40));
+        root.child(actions);
+
         refresh();
+    }
+
+    private int editorWidth(){
+        return (int) (this.width * EDITOR_SHARE) - 40;
     }
 
     private String loreText(){
@@ -226,11 +235,10 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
     /**
      * Puts the buttons into rows that break before they run out of the editor column.
      */
-    private FlowLayout buttonRows(List<ButtonComponent> buttons){
+    private FlowLayout buttonRows(List<ButtonComponent> buttons, int available){
         FlowLayout rows = UIContainers.verticalFlow(Sizing.fill(100), Sizing.content());
         rows.gap(2);
 
-        int available = Math.max(160, (int) (this.width * EDITOR_SHARE) - 24);
         FlowLayout row = null;
         int used = 0;
 
@@ -254,11 +262,10 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         box.gap(3);
 
         if(backends.isEmpty()){
-            LabelComponent none = UIComponents.label(Component.literal("Neither claude (Claude Code) nor codex (OpenAI Codex) was found on the PATH."));
+            LabelComponent none = UIComponents.label(Component.literal("Neither claude (Claude Code) nor codex (OpenAI Codex) was found on the PATH of this game. Start the game from a terminal where the command works."));
             none.color(MUTED);
             none.horizontalSizing(Sizing.fill(100));
             box.child(none);
-            return box;
         }
 
         instructionBox = UIComponents.textBox(Sizing.fill(100));
@@ -272,9 +279,10 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         backendButton.horizontalSizing(Sizing.fixed(Math.max(120, this.font.width("AI: OpenAI Codex") + 14)));
         rewriteButton = button("Rewrite", this::rewrite);
         undoButton = button("Undo", this::undoAi);
+        rewriteButton.active(!backends.isEmpty());
         undoButton.active(false);
 
-        box.child(buttonRows(List.of(backendButton, rewriteButton, undoButton)));
+        box.child(buttonRows(List.of(backendButton, rewriteButton, undoButton), editorWidth()));
 
         status = UIComponents.label(Component.empty());
         status.color(MUTED);
@@ -286,10 +294,11 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
     // ------------------------------------------------------------------ AI
 
     private String backendLabel(){
-        return "AI: " + backends.get(backend).label();
+        return backends.isEmpty() ? "AI: not found" : "AI: " + backends.get(backend).label();
     }
 
     private void cycleBackend(){
+        if(backends.isEmpty()) return;
         backend = (backend + 1) % backends.size();
         backendButton.setMessage(Component.literal(backendLabel()));
     }
@@ -489,6 +498,12 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
 
         preview.clearChildren();
         for (Component line : lines) {
+            //An empty label has no height, blank lore lines would vanish from the preview
+            if(line.getString().isEmpty()){
+                preview.child(UIComponents.spacer().horizontalSizing(Sizing.fixed(1)).verticalSizing(Sizing.fixed(this.font.lineHeight)));
+                continue;
+            }
+
             LabelComponent label = UIComponents.label(line);
             label.shadow(true);
             label.horizontalSizing(Sizing.fixed(PREVIEW_WIDTH));
