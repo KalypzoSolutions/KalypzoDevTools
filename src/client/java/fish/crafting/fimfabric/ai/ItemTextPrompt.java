@@ -59,7 +59,8 @@ public final class ItemTextPrompt {
                 Effects: <gradient:#rrggbb:#rrggbb> <rainbow>, <reset> clears everything
                 Names and lore are shown in italics by default, so start a line with <!italic> unless italics are wanted.
                 Icons of a CraftEngine server are written as <image:namespace:id>, text in a custom font as
-                <font:namespace:path>. Keep every existing <image:...> and <font:...> tag exactly as it is, unless
+                <font:namespace:path>. A character that cannot be typed is written as <glyph:HEX>, for example <glyph:E001>.
+                Keep every existing <image:...>, <glyph:...> and <font:...> tag exactly as it is, unless
                 the task asks to change it. Never turn an image into a plain character.
                 %s
                 Do not use click, hover or other tags. Keep lore lines short enough for a tooltip.

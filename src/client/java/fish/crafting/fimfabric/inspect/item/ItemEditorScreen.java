@@ -419,7 +419,7 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
     private void rewrite(){
         if(asking || selectedBackend == null) return;
 
-        String prompt = ItemTextPrompt.build(itemData(), nameBox.getValue(), loreArea.getValue(), aiTask,
+        String prompt = ItemTextPrompt.build(MiniMessage.protectGlyphs(itemData()), nameBox.getValue(), loreArea.getValue(), aiTask,
                 CraftEngineImages.get().ids());
         LocalAi.Backend backend = selectedBackend;
 
@@ -452,6 +452,7 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
                 return;
             }
 
+            int iconsBefore = MiniMessage.countIcons(nameBox.getValue()) + MiniMessage.countIcons(loreArea.getValue());
             beforeAi = new String[]{nameBox.getValue(), loreArea.getValue()};
             undoButton.active(true);
             if(answer.name() != null) nameBox.replaceAll(answer.name());
@@ -460,8 +461,16 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
 
             closeAiPanel();
             status.text(Component.literal("AI: " + (answer.notes() != null ? answer.notes() : "applied to the fields")
-                    + "  (Undo AI brings your text back)"));
+                    + "  (Undo AI brings your text back)" + lostIcons(iconsBefore)));
         }));
+    }
+
+    /**
+     * A note for the status line if the AI answer has fewer icons than the text it was given.
+     */
+    private String lostIcons(int before){
+        int after = MiniMessage.countIcons(nameBox.getValue()) + MiniMessage.countIcons(loreArea.getValue());
+        return after < before ? "  WARNING: the AI dropped " + (before - after) + " icon(s), Undo AI brings them back" : "";
     }
 
     private void undoAi(){

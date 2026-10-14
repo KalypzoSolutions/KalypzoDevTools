@@ -59,7 +59,7 @@ public final class MiniMessage {
     );
 
     private static final Set<String> DECORATIONS = Set.of("bold", "italic", "underlined", "strikethrough", "obfuscated");
-    private static final Set<String> OTHER_TAGS = Set.of("color", "gradient", "rainbow", "reset", "newline", "key", "translatable", "font", "image", "shift");
+    private static final Set<String> OTHER_TAGS = Set.of("color", "gradient", "rainbow", "reset", "newline", "key", "translatable", "font", "image", "shift", "glyph");
 
     private static final class Frame {
         final String name;
@@ -258,6 +258,19 @@ public final class MiniMessage {
             }
             //Shifts need the negative space font of the server's pack, there is nothing to preview
             case "shift" -> {}
+            //A character that cannot be shown or typed, written as its code point: <glyph:E001>
+            case "glyph" -> {
+                int codepoint;
+                try {
+                    codepoint = parts.length < 2 ? -1 : Integer.parseInt(parts[1], 16);
+                } catch (NumberFormatException e) {
+                    codepoint = -1;
+                }
+                if(!Character.isValidCodePoint(codepoint)) return false;
+
+                //It belongs to the text around it, so it takes the style of the open tags
+                text.appendCodePoint(codepoint);
+            }
             default -> {
                 //Only the decorations are left
                 Frame frame = new Frame(name);
@@ -363,6 +376,33 @@ public final class MiniMessage {
     // ---------------------------------------------------------------- the other way around
 
     /**
+     * Writes private use characters as {@code <glyph:HEX>}, the way {@link #serialize} does, for text
+     * that is not a component, like the raw component data shown to an AI.
+     */
+    public static String protectGlyphs(String text){
+        StringBuilder out = new StringBuilder();
+        for (int codepoint : text.codePoints().toArray()) {
+            if(Character.getType(codepoint) == Character.PRIVATE_USE){
+                out.append("<glyph:").append(Integer.toHexString(codepoint).toUpperCase(Locale.ROOT)).append('>');
+            } else {
+                out.appendCodePoint(codepoint);
+            }
+        }
+        return out.toString();
+    }
+
+    /**
+     * How many icons (images and glyphs) a text contains.
+     */
+    public static int countIcons(String text){
+        int count = 0;
+        for (String marker : new String[]{"<glyph:", "<image:"}) {
+            for (int at = text.indexOf(marker); at >= 0; at = text.indexOf(marker, at + 1)) count++;
+        }
+        return count;
+    }
+
+    /**
      * Turns a component back into MiniMessage, so existing names and lore can be edited.
      */
     public static String serialize(Component component){
@@ -395,6 +435,10 @@ public final class MiniMessage {
             for (int codepoint : content.codePoints().toArray()) {
                 String id = images.get(index++);
                 if(id != null) out.append("<image:").append(id).append('>');
+                //Icons are private use characters: invisible in a text field, and lost on the way to an AI
+                else if(Character.getType(codepoint) == Character.PRIVATE_USE){
+                    out.append("<glyph:").append(Integer.toHexString(codepoint).toUpperCase(Locale.ROOT)).append('>');
+                }
                 else out.append(new String(Character.toChars(codepoint)).replace("\\", "\\\\").replace("<", "\\<"));
             }
             return Optional.empty();
