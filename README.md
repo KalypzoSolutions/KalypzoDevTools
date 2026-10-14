@@ -1,6 +1,6 @@
-# Integrated Dev Tools for Minecraft
+# Kalypzo Dev Tools for Minecraft
 
-Credits to [ACraftingFish](https://www.patreon.com/c/ACraftingFish) for creating the original FIM project, which this repository is based on.
+Credits to [ACraftingFish](https://www.patreon.com/c/ACraftingFish) for creating the original FIM project and to [Offensichtlicher](https://github.com/Offensichtlicher/IntegratedDevTools) for the Integrated Dev Tools fork, which this repository is based on.
 
 This repository is the Minecraft part of the project only.
 
@@ -9,20 +9,20 @@ This repository is the Minecraft part of the project only.
 
 ---
 
-Fish's Integrated Minecraft (FIM for short) is a **Minecraft-to-IntelliJ** integration that aims to eliminate tedious tasks when coding.
+Kalypzo Dev Tools (formerly Integrated Dev Tools, based on Fish's Integrated Minecraft) is a **Minecraft-to-IntelliJ** integration that aims to eliminate tedious tasks when coding.
 
 
 
-**NOTE: FIM is currently in an _early alpha_ stage, things are bound to break/change!**
+**NOTE: Kalypzo Dev Tools is currently in an _early alpha_ stage, things are bound to break/change!**
 
 ## 💾 Installation
 
 _IntelliJ is not required in order to use Minecraft-only features of the mod!_
 
 ### Minecraft
-> FIM runs on [Fabric](https://fabricmc.net/), and is built to support **latest** versions of Minecraft only.
+> Kalypzo Dev Tools runs on [Fabric](https://fabricmc.net/), and is built to support **latest** versions of Minecraft only.
 >
-> Download the Fabric Mod from this repository's [releases](https://github.com/FishIntegratedMinecraft/FIM-Fabric/releases) or from [Modrinth](https://modrinth.com/mod/fish-integrated-minecraft).
+> Download the Fabric Mod from this repository's [releases](https://github.com/KalypzoSolutions/KalypzoDevTools/releases) or from [Modrinth](https://modrinth.com/mod/fish-integrated-minecraft).
 
 ### IntelliJ
 > You can find the IntelliJ plugin inside of IntelliJ, by searching for ``Fish's Integrated Minecraft`` under Plugins!

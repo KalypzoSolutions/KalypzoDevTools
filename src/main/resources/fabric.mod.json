@@ -2,14 +2,14 @@
   "schemaVersion": 1,
   "id": "fim",
   "version": "${version}",
-  "name": "Fish's Integrated Minecraft",
+  "name": "Kalypzo Dev Tools",
   "description": "Adds IntelliJ integration to Minecraft.",
   "authors": [
     "Offensichtlich",
     "ACraftingFish"
   ],
   "contact": {
-    "sources": "https://github.com/Offensichtliches/FIM-Fabric"
+    "sources": "https://github.com/KalypzoSolutions/KalypzoDevTools"
   },
   "license": "MIT License",
   "icon": "assets/fim/icon.png",

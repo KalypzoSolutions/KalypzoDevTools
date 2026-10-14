@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Fabric-Client-Mod, der Minecraft an das IntelliJ-Plugin FIM anbindet. Fork von `FishIntegratedMinecraft/FIM-Fabric`.
+Fabric-Client-Mod (Kalypzo Dev Tools), der Minecraft an das IntelliJ-Plugin FIM anbindet. Fork von `Offensichtlicher/IntegratedDevTools`, das auf `FishIntegratedMinecraft/FIM-Fabric` basiert.
 
 ## Build & Run
 
