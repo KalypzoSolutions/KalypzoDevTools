@@ -177,6 +177,7 @@ public class ItemEditorScreen extends BaseOwoScreen<FlowLayout> {
         status.color(MUTED);
         status.horizontalSizing(Sizing.fill(100));
         editor.child(status);
+int packImages = CraftEngineImages.get().packImageCount();        if(packImages > 0) status.text(Component.literal("CraftEngine: " + packImages + " images found in the active resource packs"));
 
         //One toolbar for both fields, it acts on the one that was used last
         editor.child(section("Format  (select text first, Ctrl+Z undo, Ctrl+B/I/U)"));
